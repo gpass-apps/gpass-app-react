@@ -4,21 +4,15 @@ import logo from '../../assets/logo-hmo2.png';
 import { IdcardOutlined, UserOutlined } from '@ant-design/icons';
 import Login from "./login";
 import SingUp from "./singUp";
+import { MenuItemType } from "antd/es/menu/interface";
 
 const { Header } = Layout;
-
-interface MenuItems {
-  key: string;
-  icon: ReactNode;
-  label: string;
-  onClick?: () => void;
-}
 
 const HeaderComponent = () => {
   const [openLogin, setOpenLogin] = useState(false);
   const [openSingUp, setOpenSingUp] = useState(false);
 
-  const menuItems: MenuItems[] = [
+  const menuItems: MenuItemType[] = [
     {
       key: '0',
       icon: <UserOutlined />,
@@ -64,7 +58,7 @@ const HeaderComponent = () => {
         <SingUp />
       </Modal>
     </>
-  )
-}
+  );
+};
 
 export default HeaderComponent;
