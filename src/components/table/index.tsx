@@ -224,11 +224,11 @@ const Table = <T extends {}>({
 										</Page>
 									</Document>).toBlob();
 
-									const formattedDate = dayjs().format('DD-MM-YYYY-HH:mm:ss');
+									const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
 									const url = window.URL.createObjectURL(blob);
 									const a = document.createElement('a');
 									a.href = url;
-									a.download = `${t?.userAmbassadorName || ""}-Ticket-${t.number}-${formattedDate}`;
+									a.download = `${t?.userAmbassadorName || ""}_Ticket-${t.number}_${formattedDate}`;
 									a.click();
 									a.remove();
 
