@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 export const baseUrlStorage = "https://firebasestorage.googleapis.com/v0/b/gpass-apps.appspot.com/o/";
 export const urlImageDefaultCompany = "https://firebasestorage.googleapis.com/v0/b/gpass-apps.appspot.com/o/company%2Fcompany.png?alt=media&token=4a25e724-96c5-4303-bbfd-0e2d03a2ccc1";
 export const urlImageDefaultEvent = "https://firebasestorage.googleapis.com/v0/b/gpass-apps.appspot.com/o/Events%2Fevento.png?alt=media&token=43afcd4d-5e32-4569-8a45-502e78932e1d";
-export const urlCloudFunction = "https://us-central1-gpass-apps.cloudfunctions.net/api";
+export const urlCloudFunction = "https://api-ixacg3o2ga-uc.a.run.app";
 
 export const privateRoutesByUser: Record<Rols, string[]> = {
   'SuperAdministrador': [
@@ -27,7 +27,7 @@ export const privateRoutesByUser: Record<Rols, string[]> = {
   'Administrador': ["/eventos", "/usuarios", "/usuarios/registrar", "/lector", "/eventos/boletos", "/eventos/registrar", "/eventos/asignar-boletos", "/eventos/lectores"],
   'Embajador': ["/eventos", "/lector", "/eventos/boletos"],
   'Lector': ["/eventos", "/lector"]
-}
+};
 
 export const initEventForm: EventForm = {
   name: "",
