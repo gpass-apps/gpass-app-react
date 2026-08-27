@@ -207,7 +207,28 @@ const CreateEvent = () => {
         onChange: (value: string) => setEvent(e => ({ ...e, companyName: value.split("-")[0], companyUid: value.split("-")[1] })),
         md: 12,
         options: companies
-      })
+      },
+        {
+          typeControl: 'textarea',
+          typeInput: 'text',
+          label: 'Texto cuando se Canjea QR',
+          name: 'textExchange',
+          value: event.textExchange,
+          onChange: (value: string) => setEvent(e => ({ ...e, textExchange: value })),
+          md: 12,
+          multiple: false
+        },
+        {
+          typeControl: 'input',
+          typeInput: 'number',
+          label: 'Cantidad de cupones x empleado',
+          name: 'cuponsByEmploye',
+          disabled: type === "update",
+          value: event.cuponsByEmploye,
+          onChange: (value: string) => setEvent(e => ({ ...e, cuponsByEmploye: value ? +value : undefined })),
+          md: 12
+        }
+      )
     }
     return inputs
   }, [companies, event, initTotalTickets, type, user?.displayName])

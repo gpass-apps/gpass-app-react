@@ -91,7 +91,7 @@ const Qr = () => {
 
       await update('Tickets', tickets[0].id!, { userScannerId: user?.uid, userScannerName: userFirestore?.name, isScanned: "Si", dateScanned: new Date() })
       setIsModalData({
-        message: `Listo ya puedes otorgar la Pizza del QR numero ${numberTicket} del evento.`,
+        message: responseEvent?.textExchange !== "" ? `${responseEvent?.textExchange}. QR numero ${numberTicket} del evento.` : `Listo ya puedes otorgar la Pizza del QR numero ${numberTicket} del evento.`,
         description: "Gracias por su apoyo.",
         type: "success"
       })
