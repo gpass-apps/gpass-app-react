@@ -10,6 +10,7 @@ import { post } from '../../../services/index';
 import { where } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useAbortController from "../../../hooks/useAbortController";
+import {statesFromMexico} from "../../../utils/functions";
 
 const roles = [
   {
@@ -23,6 +24,10 @@ const roles = [
   {
     value: 'Lector',
     text: 'Lector'
+  },
+  {
+    value: 'Empleado',
+    text: 'Empleado'
   }
 ];
 
@@ -95,7 +100,7 @@ const UsersRegister = () => {
 
     delete _user.confirmPassword;
     _user.email = _user.email.toLocaleLowerCase()
-    
+
     try {
       if (type === "update") {
         await post(`/users/${type}`, _user, abortController.current!);
@@ -189,6 +194,25 @@ const UsersRegister = () => {
               value: user.confirmPassword,
               onChange: (value: Rols) => setUser({ ...user, confirmPassword: value }),
               rules: rulesPassword,
+            },
+            {
+              typeControl: 'input',
+              typeInput: 'number',
+              label: 'Zona',
+              name: 'zone',
+              disabled: type === "update",
+              value: user.zone,
+              onChange: (value: string) => setUser(e => ({ ...user, zone: value ? +value : undefined })),
+              md: 12
+            },
+            {
+              typeControl: 'select',
+              label: 'Estado',
+              name: 'state',
+              value: user.state,
+              onChange: (value: Rols) => setUser({ ...user, state: value }),
+              md: 12,
+              options: statesFromMexico as Option[]
             },
           ]}
         />

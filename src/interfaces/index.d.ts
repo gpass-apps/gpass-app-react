@@ -20,6 +20,8 @@ export interface Event {
   disabled?: boolean;
   createAt: Date;
   total?: number;
+  cuponsByEmploye?: number;
+  textExchange: string;
   companyName: Company | string;
   companyUid: Company | string;
   userAmbassadorIds: string[];
