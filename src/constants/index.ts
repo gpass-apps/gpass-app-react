@@ -79,6 +79,8 @@ export const initUser: User = {
   phone: "",
   companyName: "",
   companyUid: "",
+  zone: 0,
+  state: "",
   password: "",
   confirmPassword: "",
   disabled: false,

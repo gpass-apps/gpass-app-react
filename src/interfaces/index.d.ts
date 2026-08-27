@@ -78,10 +78,12 @@ export interface User {
   phone: string;
   email: string;
   companyName: string;
+  zone?: number;
   companyUid: Company | string;
   password: string;
   confirmPassword?: string;
   role?: Rols;
+  state: string;
   createAt: Date,
   disabled?: boolean;
 }
