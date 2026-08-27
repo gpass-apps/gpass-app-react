@@ -37,7 +37,7 @@ export interface Range {
   index: number;
   startRange?: number;
   endRange?: number;
-  userScannerIds?: string[]
+  userScannerIds?: string[];
 }
 
 export interface Ticket {
@@ -57,7 +57,7 @@ export interface Ticket {
 export type EventForm = Omit<Event, "initialDate" | "finalDate"> & {
   initialDate: Dayjs;
   finalDate: Dayjs;
-}
+};
 
 export interface Company {
   id?: string;
@@ -76,14 +76,15 @@ export interface User {
   phone: string;
   email: string;
   companyName: string;
+  zone?: string;
   companyUid: Company | string;
   password: string;
   confirmPassword?: string;
   role?: Rols;
+  state: string;
   createAt: Date,
   disabled?: boolean;
 }
-
 export interface CustomInput {
   typeControl: TypeControl;
   typeInput?: TypeInput;

@@ -12,7 +12,8 @@ const firstRouteByUser: Record<Rols, string> = Object.freeze({
   "SuperAdministrador": "/empresas",
   "Administrador": "/eventos",
   "Embajador": "/eventos",
-  "Lector": "/eventos"
+  "Lector": "/eventos",
+  "Empleado": "/eventos"
 });
 
 const RoterChecker = () => {
@@ -31,7 +32,7 @@ const RoterChecker = () => {
     if (user && !privateRoutesByUser[user?.displayName as Rols].includes(pathname)) {
       navigate(firstRouteByUser[user?.displayName as Rols]);
     }
-  }, [user, pathname, navigate, loading])
+  }, [user, pathname, navigate, loading]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -43,7 +44,7 @@ const RoterChecker = () => {
         </Suspense>
       </Layout.Content>
     </Layout>
-  )
-}
+  );
+};
 
 export default RoterChecker;

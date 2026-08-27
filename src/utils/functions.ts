@@ -2,6 +2,7 @@ import { Modal, UploadFile, message } from "antd";
 import { RcFile } from "antd/es/upload";
 import { User, onIdTokenChanged, getAuth } from 'firebase/auth';
 import { ReactNode } from "react";
+import exceljs from "exceljs";
 
 export const getCurrentToken = () => new Promise<string>((resolve, reject) => {
   const uns = onIdTokenChanged(
@@ -38,7 +39,7 @@ export const validFiles = (fileList: RcFile[], accept: string, showMessageError?
   }
 
   return true;
-}
+};
 
 export const onPreviewImage = async (file: UploadFile) => {
   let src = file.url as string;
@@ -62,9 +63,9 @@ export const onPreviewImage = async (file: UploadFile) => {
   image.src = src;
   const imgWindow = window.open(src);
   imgWindow?.document.write(image.outerHTML);
-}
+};
 
-export const setImagesToState = <T extends { image?: string | UploadFile[], images?: string[] | UploadFile[] }>(state: T) => {
+export const setImagesToState = <T extends { image?: string | UploadFile[], images?: string[] | UploadFile[]; }>(state: T) => {
   const _state = { ...state };
 
   if (_state.image) {
@@ -98,7 +99,7 @@ export const setImagesToState = <T extends { image?: string | UploadFile[], imag
   }
 
   return _state;
-}
+};
 
 export const fileToBase64 = (file: File) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -115,7 +116,7 @@ export const handleError = (error: any) => {
   }
 
   throw new Error(error as string);
-}
+};
 
 export const confirmDialog = <T>(content: ReactNode, fun: () => Promise<T>, textSuccess?: string) =>
   new Promise<T>((resolve, reject) => Modal.confirm({
@@ -145,3 +146,25 @@ export const confirmDialog = <T>(content: ReactNode, fun: () => Promise<T>, text
 export const getArrayChunk = <T>(array: Array<T>, size: number) => Array.from({ length: Math.ceil(array.length / size) }, (v, i) =>
   array.slice(i * size, i * size + size)
 );
+
+
+export const getWorkbookFromFile = (file: File) => new Promise<exceljs.Workbook>((resolve, reject) => {
+  const reader = new FileReader();
+
+  reader.readAsArrayBuffer(file);
+
+  reader.onload = async () => {
+    let workbook = new exceljs.Workbook();
+    workbook = await workbook.xlsx.load(reader.result as ArrayBuffer);
+    resolve(workbook);
+  };
+
+  reader.onerror = () => reject(new Error("Error al obtener Workbook."));
+});
+
+export const isObject = (value: unknown) => {
+  return typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value);
+}
+

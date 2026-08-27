@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import dayjs from "dayjs";
 
-export type Rols = "SuperAdministrador" | "Administrador" | "Embajador" | "Lector";
+export type Rols = "SuperAdministrador" | "Administrador" | "Embajador" | "Lector" | "Empleado";
 export type OptionsValue = string | number | Boolean | dayjs.Dayjs | null | undefined;
 export type TypeControl = 'input' | 'select' | 'date' | 'checkbox' | 'radio' | 'autocomplete' | 'textarea' | 'file' | 'timeRangePicker' | 'phone';
 export type TypeInput = 'text' | 'number' | 'password' | 'email';

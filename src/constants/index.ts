@@ -19,14 +19,16 @@ export const privateRoutesByUser: Record<Rols, string[]> = {
     "/eventos/boletos",
     "/eventos/asignar-boletos",
     "/eventos/lectores",
+    "/eventos/cupones",
     "/usuarios",
     "/usuarios/registrar",
     "/usuarios/editar",
     "/lector",
   ],
-  'Administrador': ["/eventos", "/usuarios", "/usuarios/registrar", "/lector", "/eventos/boletos", "/eventos/registrar", "/eventos/asignar-boletos", "/eventos/lectores"],
-  'Embajador': ["/eventos", "/lector", "/eventos/boletos"],
-  'Lector': ["/eventos", "/lector"]
+  'Administrador': ["/eventos", "/usuarios", "/usuarios/registrar", "/lector", "/eventos/boletos", "/eventos/registrar", "/eventos/asignar-boletos", "/eventos/lectores", "/eventos/cupones"],
+  'Embajador': ["/eventos", "/lector", "/eventos/boletos", "/eventos/cupones"],
+  'Lector': ["/eventos", "/lector"],
+  "Empleado": []
 };
 
 export const initEventForm: EventForm = {
@@ -78,7 +80,9 @@ export const initUser: User = {
   password: "",
   confirmPassword: "",
   disabled: false,
-  createAt: new Date()
+  createAt: new Date(),
+  state: "",
+  zone: ""
 };
 
 export const rulePhoneInput: FormRule = {
@@ -104,3 +108,13 @@ export const titleForm: Record<TypeRute, string> = {
   create: "Registrar",
   update: "Editar"
 } as const;
+
+
+export const mapExcelHeadersCoupons: Record<string, keyof User> = {
+  "nombre": "name",
+  "zona": "zone",
+  "sucursal": "companyName",
+  "estado": "state",
+  "celular": "phone",
+  "email": "email"
+};
