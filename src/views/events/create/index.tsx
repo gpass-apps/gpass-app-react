@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import DynamicForm from '../../../components/dynamicForm'
-import { Card, Form, UploadFile, message } from 'antd'
+import { useEffect, useMemo, useState } from 'react';
+import DynamicForm from '../../../components/dynamicForm';
+import { Card, Form, UploadFile, message } from 'antd';
 import { add, update, getCollectionGeneric } from '../../../services/firebase';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { initEventForm, titleForm } from '../../../constants';
@@ -31,18 +31,18 @@ const CreateEvent = () => {
 
   useEffect(() => {
     const init = async () => {
-      const response = await getCollectionGeneric<Company>('Companies', [where("disabled", "==", false)])
+      const response = await getCollectionGeneric<Company>('Companies', [where("disabled", "==", false)]);
       const selectComapanies = response.map((company) => {
         return {
           value: company.name + "-" + company.id,
           text: company.name
-        }
-      })
+        };
+      });
       setCompanies(selectComapanies as Option[]);
-    }
+    };
 
     init();
-  }, [])
+  }, []);
 
   useEffect(() => {
     let _event = { ...state } as EventForm | null;
@@ -55,15 +55,15 @@ const CreateEvent = () => {
 
     setEvent({ ..._event!, initialDate: dayjs(_event!.initialDate), finalDate: dayjs(_event!.finalDate) });
     setInitTotalTickets(_event!.total!);
-  }, [state, form])
+  }, [state, form]);
 
   const onFinish = async () => {
     if (saving) return;
 
     try {
       setSaving(true);
-      const dataUser = await getCollectionGeneric<EventForm>("Users", [where("email", "==", user?.email)])
-      const duplicateData = await getCollectionGeneric<EventForm>(collectionName, [where("name", "==", event.name)])
+      const dataUser = await getCollectionGeneric<EventForm>("Users", [where("email", "==", user?.email)]);
+      const duplicateData = await getCollectionGeneric<EventForm>(collectionName, [where("name", "==", event.name)]);
 
       if (duplicateData.length && (!event.id || (event.id && event.id !== duplicateData[0].id))) {
         message.error('Este evento ya esta registrado.', 4);
@@ -103,11 +103,11 @@ const CreateEvent = () => {
       }
 
       message.success('Evento guardado con éxito.', 4);
-      navigate('/eventos')
+      navigate('/eventos');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const saveTickets = async (tickets: Ticket[]) => {
     try {
@@ -134,7 +134,7 @@ const CreateEvent = () => {
     } catch (error) {
       throw error;
     }
-  }
+  };
 
   const inputs = useMemo(() => {
     const inputs: CustomInput[] = [
@@ -222,16 +222,16 @@ const CreateEvent = () => {
           typeControl: 'input',
           typeInput: 'number',
           label: 'Cantidad de cupones x empleado',
-          name: 'cuponsByEmploye',
+          name: 'couponsByEmployee',
           disabled: type === "update",
-          value: event.cuponsByEmploye,
-          onChange: (value: string) => setEvent(e => ({ ...e, cuponsByEmploye: value ? +value : undefined })),
+          value: event.couponsByEmployee,
+          onChange: (value: string) => setEvent(e => ({ ...e, couponsByEmployee: value ? +value : undefined })),
           md: 12
         }
-      )
+      );
     }
-    return inputs
-  }, [companies, event, initTotalTickets, type, user?.displayName])
+    return inputs;
+  }, [companies, event, initTotalTickets, type, user?.displayName]);
 
   return (
     <div>
@@ -253,7 +253,7 @@ const CreateEvent = () => {
         />
       </Card>
     </div>
-  )
-}
+  );
+};
 
 export default CreateEvent;
