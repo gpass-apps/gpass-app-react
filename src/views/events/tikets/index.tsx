@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react"
-import { QueryConstraint, limit, orderBy, where } from "firebase/firestore"
-import HeaderView from "../../../components/headerView"
-import Table, { PropsTable } from "../../../components/table"
-import { ColumnsType } from "antd/es/table"
-import { Event, Ticket, User } from "../../../interfaces"
-import { useLocation } from "react-router-dom"
-import dayjs from "dayjs"
-import { QRCodeCanvas } from "qrcode.react"
-import useCollection, { PropsUseCollection } from "../../../hooks/useCollection"
-import { Form } from "antd"
-import { useAuth } from "../../../context/authContext"
+import { useEffect, useMemo, useState } from "react";
+import { QueryConstraint, limit, orderBy, where } from "firebase/firestore";
+import HeaderView from "../../../components/headerView";
+import Table, { PropsTable } from "../../../components/table";
+import { ColumnsType } from "antd/es/table";
+import { Event, Ticket, User } from "../../../interfaces";
+import { useLocation } from "react-router-dom";
+import dayjs from "dayjs";
+import { QRCodeCanvas } from "qrcode.react";
+import useCollection, { PropsUseCollection } from "../../../hooks/useCollection";
+import { Form } from "antd";
+import { useAuth } from "../../../context/authContext";
 
 interface TicketTable extends Ticket {
   ticketUrl?: string;
@@ -37,7 +37,7 @@ const Tickets = () => {
     });
 
     form.setFieldsValue(values);
-  }, [form, tickets])
+  }, [form, tickets]);
 
   const event = useMemo(() => {
     if (state) {
@@ -61,9 +61,9 @@ const Tickets = () => {
     },
     {
       title: "Embajador",
-      dataIndex: "userAmbassadorId",
-      key: "userAmbassadorId",
-      render: (_, ticket) => (users.find(u => u.id === ticket.userAmbassadorId)?.name || "")
+      dataIndex: "userAmbassadorName",
+      key: "userAmbassadorName",
+      render: (_, ticket) => ticket.userAmbassadorName
     },
     {
       title: "",
@@ -137,7 +137,7 @@ const Tickets = () => {
       />
       <Table {...propsTable} />
     </div>
-  )
-}
+  );
+};
 
 export default Tickets;

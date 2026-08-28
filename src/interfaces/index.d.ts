@@ -20,6 +20,8 @@ export interface Event {
   disabled?: boolean;
   createAt: Date;
   total?: number;
+  couponsByEmployee?: number;
+  textExchange: string;
   companyName: Company | string;
   companyUid: Company | string;
   userAmbassadorIds: string[];
@@ -85,6 +87,11 @@ export interface User {
   createAt: Date,
   disabled?: boolean;
 }
+
+export interface UserUpload extends User {
+  numberOfCoupons?: number;
+}
+
 export interface CustomInput {
   typeControl: TypeControl;
   typeInput?: TypeInput;

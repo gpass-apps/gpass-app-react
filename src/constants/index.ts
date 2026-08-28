@@ -39,7 +39,9 @@ export const initEventForm: EventForm = {
   disabled: false,
   createAt: new Date(),
   total: 0,
+  couponsByEmployee: 0,
   companyName: "",
+  textExchange: "",
   companyUid: "",
   userAmbassadorIds: [],
   ambassadorsRanges: [],
@@ -54,7 +56,9 @@ export const initEvent: Event = {
   disabled: false,
   createAt: new Date(),
   total: 0,
+  couponsByEmployee: 0,
   companyName: "",
+  textExchange: "",
   companyUid: "",
   userAmbassadorIds: [],
   ambassadorsRanges: [],
@@ -110,11 +114,14 @@ export const titleForm: Record<TypeRute, string> = {
 } as const;
 
 
-export const mapExcelHeadersCoupons: Record<string, keyof User> = {
+export const mapExcelHeadersCoupons: Record<string, keyof User | "numberOfCoupons"> = {
   "nombre": "name",
   "zona": "zone",
   "sucursal": "companyName",
   "estado": "state",
   "celular": "phone",
-  "email": "email"
+  "email": "email",
+  "cantidad de cupones": "numberOfCoupons"
 };
+
+export const validCouponColumns = Object.keys(mapExcelHeadersCoupons);

@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Col, Row, Upload } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { UploadChangeParam, UploadFile } from "antd/es/upload";
-import { initEvent, initUser, mapExcelHeadersCoupons } from "../../../constants";
+import { initEvent, } from "../../../constants";
 import { useLocation } from "react-router-dom";
 import HeaderView from "../../../components/headerView";
-import { Event, User } from "../../../interfaces";
-import { getWorkbookFromFile, isObject } from "../../../utils/functions";
+import { Event, User, UserUpload } from "../../../interfaces";
+import { getArrayChunk, } from "../../../utils/functions";
 import { message } from 'antd';
+import { RcFile } from "antd/lib/upload";
+import { getUsersUploadFromExcel } from "./functions";
+import { bulkSetDocuments } from "../../../services/firebase";
 
 const Coupons = () => {
   const [uploading, setUploading] = useState(false);
@@ -24,9 +26,7 @@ const Coupons = () => {
     return initEvent;
   }, [state]);
 
-  const uploadCoupons = async (info: UploadChangeParam<UploadFile<any>>) => {
-    const file = info.file.originFileObj;
-
+  const uploadCoupons = async (file: RcFile) => {
     if (!file) {
       message.error("Error, archivo no encontrado.");
       return;
@@ -35,47 +35,21 @@ const Coupons = () => {
     setUploading(true);
 
     try {
-      const workbook = await getWorkbookFromFile(file);
-      const worksheet = workbook.getWorksheet(1);
+      const usersUpload = await getUsersUploadFromExcel(file, event);
+      const users = usersUpload.map(u => {
+        delete u.numberOfCoupons;
 
-      if (!worksheet) {
-        message.error("Error, hoja de excel no encontrada");
-        return;
-      }
+        u.id = u.email;
+        return u;
+      }) as User[];
 
-      const employees: User[] = [];
-      const headers = (worksheet.getRow(1).values as string[]).slice(1).map(h => h.toLocaleLowerCase());
-      const userKeys = headers.map(h => mapExcelHeadersCoupons[h]);
+      console.log(users);
+      await bulkSetDocuments("Users", users);
 
-      const rows = worksheet.getSheetValues().slice(2).map(row => (row as Array<any>).slice(1));
-
-      console.log(rows);
-
-      for (const row of rows) {
-        let user: User = {} as User;
-
-        for (let i = 0; i < userKeys.length; i++) {
-          const key = userKeys[i];
-          let cellValue = row[i];
-
-          if (typeof cellValue === "undefined" || cellValue === null) {
-            cellValue = "";
-          }
-
-          if (isObject(cellValue) && "result" in cellValue) {
-            cellValue = (cellValue.result as number).toString();
-          }
-
-          user = { ...user, [key]: cellValue.toString() };
-        }
-
-        employees.push(user);
-      }
-
-      console.log(employees);
+      message.success("Cupones cargados con exito!", 5);
     } catch (error) {
-      console.log(error);
-      message.error("Error al procesar el archivo excel.");
+      console.error(error);
+      message.error(error instanceof Error ? error.message : "Error al procesar el excel.", 5);
     } finally {
       setUploading(false);
     }
@@ -103,7 +77,10 @@ const Coupons = () => {
         </Col>
         <Col>
           <Upload
-            onChange={uploadCoupons}
+            beforeUpload={(file) => {
+              uploadCoupons(file);
+              return false;
+            }}
             accept=".xlsx"
             showUploadList={false}
             customRequest={({ onSuccess }) => {
