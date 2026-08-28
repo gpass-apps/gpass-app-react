@@ -81,12 +81,12 @@ export const initUser: User = {
   phone: "",
   companyName: "",
   companyUid: "",
+  zone: "",
+  state: "",
   password: "",
   confirmPassword: "",
   disabled: false,
   createAt: new Date(),
-  state: "",
-  zone: ""
 };
 
 export const rulePhoneInput: FormRule = {

@@ -47,7 +47,9 @@ const Users = () => {
     { title: 'Empresa', dataIndex: 'companyName', key: 'companyName' },
     { title: 'Correo', dataIndex: 'email', key: 'email' },
     { title: 'Teléfono', dataIndex: 'phone', key: 'phone' },
-    { title: 'Rol', dataIndex: 'role', key: 'role' }
+    { title: 'Rol', dataIndex: 'role', key: 'role' },
+    { title: 'Zona', dataIndex: 'zone', key: 'zone' },
+    { title: 'Estado', dataIndex: 'state', key: 'state' }
   ], [])
 
   const query = useMemo<QueryConstraint[]>(() => {
