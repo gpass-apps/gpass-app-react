@@ -7,7 +7,7 @@ import { App as AntdApp } from "antd";
 
 const App = () => {
   return (
-    <AntdApp >
+    <AntdApp>
       <ConfigProvider locale={locale}>
         <AuthProvider>
           <MyRouter />

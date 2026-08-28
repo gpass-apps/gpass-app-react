@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
-import DynamicForm from '../../../components/dynamicForm'
-import { Card, Form, message, FormRule } from 'antd'
+import { useState, useEffect, useMemo } from 'react';
+import DynamicForm from '../../../components/dynamicForm';
+import { Card, Form, message, FormRule } from 'antd';
 import { initUser, titleForm } from '../../../constants';
 import { User, Option, Company } from '../../../interfaces';
 import { Rols, TypeRute } from '../../../types';
@@ -10,7 +10,7 @@ import { post } from '../../../services/index';
 import { where } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useAbortController from "../../../hooks/useAbortController";
-import {statesFromMexico} from "../../../utils/functions";
+import { statesFromMexico } from "../../../utils/functions";
 
 const roles = [
   {
@@ -40,13 +40,13 @@ const UsersRegister = () => {
   const [form] = Form.useForm();
   const [type, setType] = useState<TypeRute>("create");
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<User>(initUser)
-  const [companies, setCompanies] = useState<Option[]>()
+  const [user, setUser] = useState<User>(initUser);
+  const [companies, setCompanies] = useState<Option[]>();
   const abortController = useAbortController();
 
   const rulesPassword: FormRule[] = useMemo(() => [
     { required: !user.id && user.password !== "", min: 6, message: 'La contraseña tiene que ser de 6 dígitos o más.' },
-  ], [user.password, user.id])
+  ], [user.password, user.id]);
 
   useEffect(() => {
     let _user = { ...state } as User | null;
@@ -57,49 +57,49 @@ const UsersRegister = () => {
 
     form.setFieldsValue(_user);
     setUser(_user);
-  }, [state, form])
+  }, [state, form]);
 
   const dataCompanies = async () => {
-    const response = await getCollectionGeneric<Company>('Companies', [where("disabled", "==", false)])
-    if (!response) return
+    const response = await getCollectionGeneric<Company>('Companies', [where("disabled", "==", false)]);
+    if (!response) return;
 
     const selectComapanies = response.map((company) => {
       return {
         value: company.name + "-" + company.id,
         text: company.name
-      }
-    })
+      };
+    });
 
-    setCompanies(selectComapanies as Option[])
-  }
+    setCompanies(selectComapanies as Option[]);
+  };
 
   useEffect(() => {
-    dataCompanies()
-  }, [])
+    dataCompanies();
+  }, []);
 
   const onFinish = async () => {
     if (saving) return;
 
     setSaving(true);
 
-    const duplicateData = await getCollectionGeneric<User>(collection, [where("email", "==", user.email)])
+    const duplicateData = await getCollectionGeneric<User>(collection, [where("email", "==", user.email)]);
 
     if (duplicateData.length && (!user.id || (user.id && user.id !== duplicateData[0].id))) {
       message.error('Este usuario ya esta registrado.', 4);
-      setSaving(false)
+      setSaving(false);
       return;
     }
-    let _user = { ...user }
+    let _user = { ...user };
     const { password, confirmPassword } = _user;
 
     if (confirmPassword !== password) {
       message.error('Las contraseñas no coinciden.');
-      setSaving(false)
+      setSaving(false);
       return;
     }
 
     delete _user.confirmPassword;
-    _user.email = _user.email.toLocaleLowerCase()
+    _user.email = _user.email.toLocaleLowerCase();
 
     try {
       if (type === "update") {
@@ -108,11 +108,11 @@ const UsersRegister = () => {
         await post(`/users/${type}`, _user, abortController.current!);
       }
       message.success('Usuario guardado con éxito.', 4);
-      navigate('/usuarios')
+      navigate('/usuarios');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -202,7 +202,7 @@ const UsersRegister = () => {
               name: 'zone',
               disabled: type === "update",
               value: user.zone,
-              onChange: (value: string) => setUser(e => ({ ...user, zone: value ? +value : undefined })),
+              onChange: (value: string) => setUser(e => ({ ...user, zone: value ? value : undefined })),
               md: 12
             },
             {
@@ -218,7 +218,7 @@ const UsersRegister = () => {
         />
       </Card>
     </div>
-  )
-}
+  );
+};
 
 export default UsersRegister;

@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { PathRouteProps } from 'react-router-dom';
 import AssignTickets from "../views/events/assignTickets";
+import Coupons from "../views/events/coupons";
 
 const LandingPage = lazy(() => import('../views/landingPage'));
 const Companies = lazy(() => import('../views/companies'));
@@ -71,9 +72,13 @@ const routes: PathRouteProps[] = [
     element: <UsersRegister />
   },
   {
+    path: "/eventos/cupones",
+    element: <Coupons />
+  },
+  {
     path: '*',
     element: <div>404 not found</div>
   }
-]
+];
 
 export default routes;

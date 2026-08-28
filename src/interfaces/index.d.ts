@@ -20,7 +20,7 @@ export interface Event {
   disabled?: boolean;
   createAt: Date;
   total?: number;
-  cuponsByEmploye?: number;
+  couponsByEmployee?: number;
   textExchange: string;
   companyName: Company | string;
   companyUid: Company | string;
@@ -39,7 +39,7 @@ export interface Range {
   index: number;
   startRange?: number;
   endRange?: number;
-  userScannerIds?: string[]
+  userScannerIds?: string[];
 }
 
 export interface Ticket {
@@ -59,7 +59,7 @@ export interface Ticket {
 export type EventForm = Omit<Event, "initialDate" | "finalDate"> & {
   initialDate: Dayjs;
   finalDate: Dayjs;
-}
+};
 
 export interface Company {
   id?: string;
@@ -78,7 +78,7 @@ export interface User {
   phone: string;
   email: string;
   companyName: string;
-  zone?: number;
+  zone?: string;
   companyUid: Company | string;
   password: string;
   confirmPassword?: string;
@@ -86,6 +86,10 @@ export interface User {
   state: string;
   createAt: Date,
   disabled?: boolean;
+}
+
+export interface UserUpload extends User {
+  numberOfCoupons?: number;
 }
 
 export interface CustomInput {

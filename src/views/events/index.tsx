@@ -8,7 +8,7 @@ import CachedImage from "../../components/cachedImage";
 import { Button } from "antd";
 import { MdConfirmationNumber } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { SecurityScanOutlined, UserAddOutlined } from '@ant-design/icons';
+import { SecurityScanOutlined, TagsFilled, UserAddOutlined } from '@ant-design/icons';
 import { useAuth } from "../../context/authContext";
 
 const Events = () => {
@@ -28,11 +28,12 @@ const Events = () => {
             shape="circle"
             icon={<SecurityScanOutlined />}
           />
-        )
+        ),
+        width: 72
       },
       { title: 'Nombre', dataIndex: 'name', key: 'name' },
-      { title: '#Boletos', dataIndex: 'total', key: 'total' },
       { title: 'Empresa', dataIndex: 'companyName', key: 'companyName' },
+      { title: '#Boletos', dataIndex: 'total', key: 'total', width: 88 },
       { title: 'Fecha Inicio', dataIndex: 'initialDateFormated', key: 'initialDateFormated' },
       { title: 'Fecha Final', dataIndex: 'finalDateFormated', key: 'finalDateFormated' },
       {
@@ -44,9 +45,27 @@ const Events = () => {
             style={{ width: 70, height: 70, objectFit: "cover" }}
             imageUrl={event.image as string}
           />
-        )
+        ),
+        width: 90
       }
-    ]
+    ];
+
+    if (["SuperAdministrador", "Administrador", "Embajador"].includes(user?.displayName!)) {
+      columns.push({
+        title: "Cupones",
+        dataIndex: "coupons",
+        key: "coupons",
+        render: (_, event) => (
+          <Button
+            type="primary"
+            onClick={() => navigate("/eventos/cupones", { state: event })}
+            shape="circle"
+            icon={<TagsFilled />}
+          />
+        ),
+        width: 76
+      });
+    }
 
     if (["SuperAdministrador", "Administrador", "Embajador"].includes(user?.displayName!)) {
       columns.push({
@@ -58,10 +77,11 @@ const Events = () => {
             type="primary"
             onClick={() => navigate("/eventos/boletos", { state: event })}
             shape="circle"
-            icon={<MdConfirmationNumber style={{ marginBottom: -2 }} />}
+            icon={<MdConfirmationNumber />}
           />
-        )
-      })
+        ),
+        width: 74
+      });
     }
 
     if (["SuperAdministrador", "Administrador"].includes(user?.displayName!)) {
@@ -74,10 +94,11 @@ const Events = () => {
             type="primary"
             onClick={() => navigate("/eventos/asignar-boletos", { state: event })}
             shape="circle"
-            icon={<MdConfirmationNumber style={{ marginBottom: -2 }} />}
+            icon={<MdConfirmationNumber />}
           />
-        )
-      })
+        ),
+        width: 100
+      });
     }
 
     if (["SuperAdministrador", "Administrador"].includes(user?.displayName!)) {
@@ -92,8 +113,9 @@ const Events = () => {
             shape="circle"
             icon={<UserAddOutlined style={{ marginBottom: -2 }} />}
           />
-        )
-      })
+        ),
+        width: 72
+      });
     }
 
     return columns;
@@ -115,7 +137,7 @@ const Events = () => {
     }
 
     return query;
-  }, [user, userFirestore])
+  }, [user, userFirestore]);
 
   return (
     <div style={{ margin: 20 }}>
@@ -135,7 +157,7 @@ const Events = () => {
         }}
       />
     </div>
-  )
-}
+  );
+};
 
 export default Events;
