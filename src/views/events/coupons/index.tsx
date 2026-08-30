@@ -1,19 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Col, Row, Upload } from "antd";
+import { Button, Col, Row, Upload, message } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { initEvent, } from "../../../constants";
+import { ColumnsType } from 'antd/es/table';
 import { useLocation } from "react-router-dom";
+import { QueryConstraint, limit, where } from 'firebase/firestore';
+import dayjs from 'dayjs';
+
+import { initEvent } from "../../../constants";
 import HeaderView from "../../../components/headerView";
-import { Event, User, UserUpload, Coupon } from "../../../interfaces";
-import { getArrayChunk, } from "../../../utils/functions";
-import { message } from 'antd';
+import Table, { PropsTable } from '../../../components/table';
+import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments } from "../../../services/firebase";
-import { add } from '../../../services/firebase';
+import { bulkSetDocuments, add } from '../../../services/firebase';
+import { useAuth } from "../../../context/authContext";
+
+interface CouponTable extends Coupon {
+  id?: string;
+}
 
 const Coupons = () => {
   const [uploading, setUploading] = useState(false);
+  const [loadingTable, setLoadingTable] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { userFirestore } = useAuth();
   const location = useLocation();
   const { state } = location;
 
@@ -23,9 +33,63 @@ const Coupons = () => {
     }
 
     window.location.href = "/eventos";
-
     return initEvent;
   }, [state]);
+
+  const searchVal = useMemo<Record<string, string>>(() => ({
+    userAmbassadorId: "Correo Embajador",
+    number: "Número",
+    isScanned: "Escaneado"
+  }), []);
+
+  const columns: ColumnsType<CouponTable> = useMemo(() => [
+    { title: 'Número', dataIndex: 'number', key: 'number' },
+    { title: 'Embajador (Email)', dataIndex: 'userAmbassadorId', key: 'userAmbassadorId' },
+    { title: 'Escaneado', dataIndex: 'isScanned', key: 'isScanned' },
+    {
+      title: 'Fecha Creación',
+      dataIndex: 'createAt',
+      key: 'createAt',
+      render: (date) => (date ? dayjs(date.toDate ? date.toDate() : date).format('DD/MM/YYYY hh:mm a') : '')
+    }
+  ], []);
+
+  const query = useMemo<QueryConstraint[]>(() => {
+
+    if (!event?.id) return [];
+
+    const queryConstraints: QueryConstraint[] = [
+      where("eventId", "==", event.id),
+      limit(20)
+    ];
+
+    if (userFirestore?.role === "Embajador") {
+      queryConstraints.push(where("userAmbassadorId", "==", userFirestore?.email || ""));
+    }
+
+    return queryConstraints;
+  }, [event?.id, userFirestore]);
+
+  const propsTable = useMemo<PropsTable<CouponTable>>(() => ({
+    wait: loadingTable,
+    columns,
+    placeholderSearch: "Buscar por correo Empleado",
+    collection: "Coupons",
+    query,
+    searchValues: searchVal,
+    disabledFilter: false,
+    disableDisabledFilter: true,
+    optiosSearchValues: [
+      {
+        propSearch: "isScanned",
+        options: [
+          { key: "", label: "Todos" },
+          { key: "Si", label: "Si" },
+          { key: "No", label: "No" }
+        ]
+      }
+    ]
+  }), [columns, query, loadingTable, searchVal, refreshKey]);
 
   const uploadCoupons = async (file: RcFile) => {
     if (!file) {
@@ -73,6 +137,7 @@ const Coupons = () => {
             isScanned: "No",
             userAmbassadorId: u.email,
             isDownloaded: false,
+            disabled: false,
             createAt: new Date(),
           };
 
@@ -81,6 +146,7 @@ const Coupons = () => {
       }
 
       message.success("Cupones cargados con éxito!", 5);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error(error);
       message.error(
@@ -93,7 +159,7 @@ const Coupons = () => {
   };
 
   return (
-    <div style={{ marginTop: 20 }}>
+    <div style={{ margin: 20 }}>
       <HeaderView
         path="/eventos"
         title={`Cupones ${event.name}`}
@@ -102,6 +168,7 @@ const Coupons = () => {
       <Row
         justify="start"
         gutter={10}
+        style={{ marginBottom: 20 }}
       >
         <Col>
           <Button
@@ -137,6 +204,11 @@ const Coupons = () => {
           </Upload>
         </Col>
       </Row>
+
+      <Table
+        key={refreshKey}
+        {...propsTable}
+      />
     </div>
   );
 };

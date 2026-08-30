@@ -5,7 +5,7 @@ import SearchTable from '../searchTable';
 import TableActionsButtons from "./tableActionsButtons";
 import { PropsUseCollection } from "../../hooks/useCollection";
 import useCollection from "../../hooks/useCollection";
-import { getDocById, update } from "../../services/firebase";
+import { getDocById, update, deleteDocument } from "../../services/firebase";
 import { DocumentData, DocumentSnapshot, QueryConstraint, endAt, orderBy, startAfter, startAt, where } from "firebase/firestore";
 import { Document, Page, Image, StyleSheet, pdf } from '@react-pdf/renderer';
 import { Button } from "antd";
@@ -265,7 +265,15 @@ const Table = <T extends {}>({
 									setTableData(prev => ({ ...prev, collection }));
 								}, 200);
 							}}
-							fun={() => path.pathname === "/usuarios" ? deleteUser(r) : update(collection, r.id, { disabled: true })}
+							fun={() => {
+								if (path.pathname === "/usuarios") return deleteUser(r);
+
+								if (["Coupons"].includes(collection)) {
+									return deleteDocument(collection, r.id);
+								}
+
+								return update(collection, r.id, { disabled: true });
+							}}
 							pathEdit={pathEdit}
 						/>
 					);
