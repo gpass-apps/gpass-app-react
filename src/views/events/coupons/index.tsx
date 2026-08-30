@@ -4,12 +4,13 @@ import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { initEvent, } from "../../../constants";
 import { useLocation } from "react-router-dom";
 import HeaderView from "../../../components/headerView";
-import { Event, User, UserUpload } from "../../../interfaces";
+import { Event, User, UserUpload, Coupon } from "../../../interfaces";
 import { getArrayChunk, } from "../../../utils/functions";
 import { message } from 'antd';
 import { RcFile } from "antd/lib/upload";
 import { getUsersUploadFromExcel } from "./functions";
 import { bulkSetDocuments } from "../../../services/firebase";
+import { add } from '../../../services/firebase';
 
 const Coupons = () => {
   const [uploading, setUploading] = useState(false);
@@ -36,20 +37,56 @@ const Coupons = () => {
 
     try {
       const usersUpload = await getUsersUploadFromExcel(file, event);
-      const users = usersUpload.map(u => {
-        delete u.numberOfCoupons;
 
-        u.id = u.email;
-        return u;
+      const eventCoupons = Number(event?.couponsByEmployee ?? 0);
+      const hasGlobal = eventCoupons > 0;
+
+      for (const u of usersUpload) {
+        const individualCoupons = Number(u.numberOfCoupons ?? 0);
+
+        if (!hasGlobal && individualCoupons <= 0) {
+          message.error(
+            "Favor de llenar las celdas de cantidad de cupones",
+            5
+          );
+          return;
+        }
+      }
+
+      const users = usersUpload.map((u) => {
+        const userCopy = { ...u, id: u.email };
+        delete userCopy.numberOfCoupons;
+        return userCopy;
       }) as User[];
 
-      console.log(users);
       await bulkSetDocuments("Users", users);
 
-      message.success("Cupones cargados con exito!", 5);
+      for (const u of usersUpload) {
+        const numberOfCoupons = hasGlobal
+          ? eventCoupons
+          : Number(u.numberOfCoupons ?? 0);
+
+        for (let i = 1; i <= numberOfCoupons; i++) {
+          const couponData = {
+            eventId: event.id!,
+            number: i,
+            isScanned: "No",
+            userAmbassadorId: u.email,
+            isDownloaded: false,
+            createAt: new Date(),
+          };
+
+          await add("Coupons", couponData);
+        }
+      }
+
+      message.success("Cupones cargados con éxito!", 5);
     } catch (error) {
       console.error(error);
-      message.error(error instanceof Error ? error.message : "Error al procesar el excel.", 5);
+      message.error(
+        error instanceof Error ? error.message : "Error al procesar el excel.",
+        5
+      );
     } finally {
       setUploading(false);
     }
