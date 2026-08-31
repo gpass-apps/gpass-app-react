@@ -3,7 +3,7 @@ import { Button, Col, Row, Upload, message } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/es/table';
 import { useLocation } from "react-router-dom";
-import { QueryConstraint, limit, where } from 'firebase/firestore';
+import { QueryConstraint, limit, where, orderBy } from 'firebase/firestore';
 import dayjs from 'dayjs';
 
 import { initEvent } from "../../../constants";
@@ -12,7 +12,7 @@ import Table, { PropsTable } from '../../../components/table';
 import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, add } from '../../../services/firebase';
+import { bulkSetDocuments, add, getCollectionGeneric } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
 
 interface CouponTable extends Coupon {
@@ -37,13 +37,19 @@ const Coupons = () => {
   }, [state]);
 
   const searchVal = useMemo<Record<string, string>>(() => ({
-    userAmbassadorId: "Correo Embajador",
+    userAmbassadorId: "Correo Empleado",
     number: "Número",
     isScanned: "Escaneado"
   }), []);
 
   const columns: ColumnsType<CouponTable> = useMemo(() => [
-    { title: 'Número', dataIndex: 'number', key: 'number' },
+    { 
+      title: 'Número', 
+      dataIndex: 'number', 
+      key: 'number',
+      defaultSortOrder: 'ascend',
+      sorter: (a, b) => (a.number ?? 0) - (b.number ?? 0)
+    },
     { title: 'Embajador (Email)', dataIndex: 'userAmbassadorId', key: 'userAmbassadorId' },
     { title: 'Escaneado', dataIndex: 'isScanned', key: 'isScanned' },
     {
@@ -91,6 +97,26 @@ const Coupons = () => {
     ]
   }), [columns, query, loadingTable, searchVal, refreshKey]);
 
+ const getLastCouponNumber = async (eventId: string): Promise<number> => {
+  try {
+    const queryConstraints: QueryConstraint[] = [
+      where("eventId", "==", eventId)
+    ];
+
+    const coupons = await getCollectionGeneric<CouponTable>("Coupons", queryConstraints);
+
+    if (coupons.length > 0) {
+      const maxNumber = Math.max(...coupons.map((c) => Number(c.number || 0)));
+      return maxNumber;
+    }
+
+    return 0;
+  } catch (error) {
+    console.error("Error al obtener el número de cupones:", error);
+    return 0;
+  }
+};
+
   const uploadCoupons = async (file: RcFile) => {
     if (!file) {
       message.error("Error, archivo no encontrado.");
@@ -125,15 +151,19 @@ const Coupons = () => {
 
       await bulkSetDocuments("Users", users);
 
+      let currentNumber = await getLastCouponNumber(event.id!);
+
       for (const u of usersUpload) {
         const numberOfCoupons = hasGlobal
           ? eventCoupons
           : Number(u.numberOfCoupons ?? 0);
 
         for (let i = 1; i <= numberOfCoupons; i++) {
+          currentNumber += 1;
+
           const couponData = {
             eventId: event.id!,
-            number: i,
+            number: currentNumber,
             isScanned: "No",
             userAmbassadorId: u.email,
             isDownloaded: false,
