@@ -1,28 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Col, Row, Upload, message } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/es/table';
 import { useLocation } from "react-router-dom";
-import { QueryConstraint, limit, where, orderBy } from 'firebase/firestore';
+import { QueryConstraint, limit, orderBy, where } from 'firebase/firestore';
 import dayjs from 'dayjs';
-
 import { initEvent } from "../../../constants";
 import HeaderView from "../../../components/headerView";
 import Table, { PropsTable } from '../../../components/table';
 import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, add, getCollectionGeneric } from '../../../services/firebase';
+import { bulkSetDocuments, add, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
 
-interface CouponTable extends Coupon {
-  id?: string;
-}
-
 const Coupons = () => {
+  const [triggerReload, setTriggerReload] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [loadingTable, setLoadingTable] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { userFirestore } = useAuth();
   const location = useLocation();
   const { state } = location;
@@ -36,21 +30,13 @@ const Coupons = () => {
     return initEvent;
   }, [state]);
 
-  const searchVal = useMemo<Record<string, string>>(() => ({
-    userAmbassadorId: "Correo Empleado",
-    number: "Número",
-    isScanned: "Escaneado"
-  }), []);
-
-  const columns: ColumnsType<CouponTable> = useMemo(() => [
-    { 
-      title: 'Número', 
-      dataIndex: 'number', 
+  const columns: ColumnsType<Coupon> = useMemo(() => [
+    {
+      title: 'Número',
+      dataIndex: 'number',
       key: 'number',
-      defaultSortOrder: 'ascend',
-      sorter: (a, b) => (a.number ?? 0) - (b.number ?? 0)
     },
-    { title: 'Embajador (Email)', dataIndex: 'userAmbassadorId', key: 'userAmbassadorId' },
+    { title: 'Empleado (Email)', dataIndex: 'userEmployeeId', key: 'userEmployeeId' },
     { title: 'Escaneado', dataIndex: 'isScanned', key: 'isScanned' },
     {
       title: 'Fecha Creación',
@@ -61,11 +47,11 @@ const Coupons = () => {
   ], []);
 
   const query = useMemo<QueryConstraint[]>(() => {
-
     if (!event?.id) return [];
 
     const queryConstraints: QueryConstraint[] = [
       where("eventId", "==", event.id),
+      orderBy("number", "asc"),
       limit(20)
     ];
 
@@ -76,13 +62,17 @@ const Coupons = () => {
     return queryConstraints;
   }, [event?.id, userFirestore]);
 
-  const propsTable = useMemo<PropsTable<CouponTable>>(() => ({
-    wait: loadingTable,
+  const propsTable = useMemo<PropsTable<Coupon>>(() => ({
+    triggerReload,
     columns,
     placeholderSearch: "Buscar por correo Empleado",
     collection: "Coupons",
     query,
-    searchValues: searchVal,
+    searchValues: {
+      userEmployeeId: "Correo Empleado",
+      number: "Número",
+      isScanned: "Escaneado"
+    },
     disabledFilter: false,
     disableDisabledFilter: true,
     optiosSearchValues: [
@@ -95,27 +85,24 @@ const Coupons = () => {
         ]
       }
     ]
-  }), [columns, query, loadingTable, searchVal, refreshKey]);
+  }), [columns, query, triggerReload]);
 
- const getLastCouponNumber = async (eventId: string): Promise<number> => {
-  try {
-    const queryConstraints: QueryConstraint[] = [
-      where("eventId", "==", eventId)
-    ];
+  const getLastCouponNumber = async (eventId: string) => {
+    try {
+      const queryConstraints: QueryConstraint[] = [
+        where("eventId", "==", eventId),
+        orderBy("number", "desc"),
+        limit(1)
+      ];
 
-    const coupons = await getCollectionGeneric<CouponTable>("Coupons", queryConstraints);
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
 
-    if (coupons.length > 0) {
-      const maxNumber = Math.max(...coupons.map((c) => Number(c.number || 0)));
-      return maxNumber;
+      return coupons.length ? coupons[0].number : 0;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error al obtener el último número de cupón.");
     }
-
-    return 0;
-  } catch (error) {
-    console.error("Error al obtener el número de cupones:", error);
-    return 0;
-  }
-};
+  };
 
   const uploadCoupons = async (file: RcFile) => {
     if (!file) {
@@ -126,22 +113,8 @@ const Coupons = () => {
     setUploading(true);
 
     try {
+      let lastNumber = await getLastCouponNumber(event.id!);
       const usersUpload = await getUsersUploadFromExcel(file, event);
-
-      const eventCoupons = Number(event?.couponsByEmployee ?? 0);
-      const hasGlobal = eventCoupons > 0;
-
-      for (const u of usersUpload) {
-        const individualCoupons = Number(u.numberOfCoupons ?? 0);
-
-        if (!hasGlobal && individualCoupons <= 0) {
-          message.error(
-            "Favor de llenar las celdas de cantidad de cupones",
-            5
-          );
-          return;
-        }
-      }
 
       const users = usersUpload.map((u) => {
         const userCopy = { ...u, id: u.email };
@@ -151,32 +124,36 @@ const Coupons = () => {
 
       await bulkSetDocuments("Users", users);
 
-      let currentNumber = await getLastCouponNumber(event.id!);
+      const coupons: Coupon[] = [];
 
       for (const u of usersUpload) {
-        const numberOfCoupons = hasGlobal
-          ? eventCoupons
-          : Number(u.numberOfCoupons ?? 0);
+        for (let i = 1; i <= u.numberOfCoupons!; i++) {
+          lastNumber += 1;
 
-        for (let i = 1; i <= numberOfCoupons; i++) {
-          currentNumber += 1;
-
-          const couponData = {
+          const couponData: Coupon = {
             eventId: event.id!,
-            number: currentNumber,
+            number: lastNumber,
             isScanned: "No",
-            userAmbassadorId: u.email,
             isDownloaded: false,
-            disabled: false,
             createAt: new Date(),
+            userEmployeeId: u.email,
+            userEmployeeName: u.name,
+
           };
 
-          await add("Coupons", couponData);
+          coupons.push(couponData);
         }
       }
 
+      await bulkAddDocuments("Coupons", coupons);
+
       message.success("Cupones cargados con éxito!", 5);
-      setRefreshKey((prev) => prev + 1);
+
+      setTriggerReload(true);
+
+      setTimeout(() => {
+        setTriggerReload(false);
+      }, 0);
     } catch (error) {
       console.error(error);
       message.error(
@@ -236,7 +213,6 @@ const Coupons = () => {
       </Row>
 
       <Table
-        key={refreshKey}
         {...propsTable}
       />
     </div>

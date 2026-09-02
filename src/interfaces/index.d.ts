@@ -42,18 +42,9 @@ export interface Range {
   userScannerIds?: string[];
 }
 
-export interface Coupon {
-  id?: string;
-  eventId: string;
-  number: number;
-  isScanned: "Si" | "No";
-  dateScanned?: Date;
-  userAmbassadorId?: string;
-  userAmbassadorName?: string;
-  userScannerId?: string;
-  userScannerName?: string;
-  isDownloaded: boolean;
-  createAt: Date;
+export interface Coupon extends Ticket {
+  userEmployeeId?: string;
+  userEmployeeName?: string;
 }
 
 export interface Ticket {

@@ -44,6 +44,7 @@ export interface PropsTable<T> extends PropsUseCollection {
 	expandable?: ExpandableConfig<any>;
 	scrollY?: string;
 	localSearch?: boolean;
+	triggerReload?: boolean;
 }
 
 interface TableData {
@@ -92,7 +93,8 @@ const Table = <T extends {}>({
 	optiosSearchValues,
 	expandable,
 	scrollY,
-	localSearch
+	localSearch,
+	triggerReload
 }: PropsTable<T>) => {
 	const { user } = useAuth();
 	const location = useLocation();
@@ -101,6 +103,16 @@ const Table = <T extends {}>({
 	const [tableData, setTableData] = useState<TableData>({ search: "", searchKey: "", collection });
 	const [search, setSearch] = useState<string | Dayjs[]>("");
 	const [searchKey, setSearchKey] = useState("");
+
+	useEffect(() => {
+		if (!triggerReload) return;
+
+		setTableData(prev => ({ ...prev, lastDoc: undefined, collection: "" }));
+		setTimeout(() => {
+			setTableData(prev => ({ ...prev, collection }));
+		}, 200);
+	}, [collection, triggerReload]);
+
 	const query = useMemo<QueryConstraint[]>(() => {
 		const { search, searchKey, lastDoc } = tableData;
 		const _query = [...queryProp];
@@ -142,6 +154,7 @@ const Table = <T extends {}>({
 
 		return _query;
 	}, [tableData, queryProp]);
+
 	const { loading, data, setData } = useCollection<T & { id: string; }>({ wait, query, collection: tableData.collection, formatDate, mergeResponse });
 
 	const deleteUser = useCallback((r: T & { id: string; }) => post(`/users/del`, r, abortController.current!), [abortController]);
