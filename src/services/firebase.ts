@@ -138,3 +138,18 @@ export const bulkSetDocuments = async (path: string, documents: Record<string, a
     await batch.commit();
   }
 };
+
+export const bulkAddDocuments = async (path: string, documents: Record<string, any>[]) => {
+  const documentChunks = getArrayChunk(documents, 500);
+
+  for (const chunk of documentChunks) {
+    const batch = writeBatch(db);
+
+    for (const docData of chunk) {
+      const ref = doc(collection(db, path));
+      batch.set(ref, docData);
+    }
+
+    await batch.commit();
+  }
+};

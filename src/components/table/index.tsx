@@ -5,7 +5,7 @@ import SearchTable from '../searchTable';
 import TableActionsButtons from "./tableActionsButtons";
 import { PropsUseCollection } from "../../hooks/useCollection";
 import useCollection from "../../hooks/useCollection";
-import { getDocById, update } from "../../services/firebase";
+import { getDocById, update, deleteDocument } from "../../services/firebase";
 import { DocumentData, DocumentSnapshot, QueryConstraint, endAt, orderBy, startAfter, startAt, where } from "firebase/firestore";
 import { Document, Page, Image, StyleSheet, pdf } from '@react-pdf/renderer';
 import { Button } from "antd";
@@ -44,6 +44,7 @@ export interface PropsTable<T> extends PropsUseCollection {
 	expandable?: ExpandableConfig<any>;
 	scrollY?: string;
 	localSearch?: boolean;
+	triggerReload?: boolean;
 }
 
 interface TableData {
@@ -92,7 +93,8 @@ const Table = <T extends {}>({
 	optiosSearchValues,
 	expandable,
 	scrollY,
-	localSearch
+	localSearch,
+	triggerReload
 }: PropsTable<T>) => {
 	const { user } = useAuth();
 	const location = useLocation();
@@ -101,6 +103,16 @@ const Table = <T extends {}>({
 	const [tableData, setTableData] = useState<TableData>({ search: "", searchKey: "", collection });
 	const [search, setSearch] = useState<string | Dayjs[]>("");
 	const [searchKey, setSearchKey] = useState("");
+
+	useEffect(() => {
+		if (!triggerReload) return;
+
+		setTableData(prev => ({ ...prev, lastDoc: undefined, collection: "" }));
+		setTimeout(() => {
+			setTableData(prev => ({ ...prev, collection }));
+		}, 200);
+	}, [collection, triggerReload]);
+
 	const query = useMemo<QueryConstraint[]>(() => {
 		const { search, searchKey, lastDoc } = tableData;
 		const _query = [...queryProp];
@@ -142,6 +154,7 @@ const Table = <T extends {}>({
 
 		return _query;
 	}, [tableData, queryProp]);
+
 	const { loading, data, setData } = useCollection<T & { id: string; }>({ wait, query, collection: tableData.collection, formatDate, mergeResponse });
 
 	const deleteUser = useCallback((r: T & { id: string; }) => post(`/users/del`, r, abortController.current!), [abortController]);
@@ -265,7 +278,15 @@ const Table = <T extends {}>({
 									setTableData(prev => ({ ...prev, collection }));
 								}, 200);
 							}}
-							fun={() => path.pathname === "/usuarios" ? deleteUser(r) : update(collection, r.id, { disabled: true })}
+							fun={() => {
+								if (path.pathname === "/usuarios") return deleteUser(r);
+
+								if (["Coupons"].includes(collection)) {
+									return deleteDocument(collection, r.id);
+								}
+
+								return update(collection, r.id, { disabled: true });
+							}}
 							pathEdit={pathEdit}
 						/>
 					);

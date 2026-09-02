@@ -24,8 +24,10 @@ export const getUsersUploadFromExcel = async (file: RcFile, event: Event) => {
   const userKeys = headers.map(h => mapExcelHeadersCoupons[h]);
   const rows = worksheet
     .getSheetValues()
-    .slice(2).map(row => (row as Array<any>)
-      .slice(1))
+    .slice(2)
+    .map(
+      row => (row as Array<any>).slice(1)
+    )
     .filter(row =>
       !row.every(
         cell =>
@@ -47,7 +49,7 @@ export const getUsersUploadFromExcel = async (file: RcFile, event: Event) => {
       }
 
       if (key === "numberOfCoupons") {
-        const numberOfCoupons = event.couponsByEmployee || +cellValue;
+        const numberOfCoupons = (cellValue ? Number(cellValue) : 0) || event.couponsByEmployee;
 
         if (typeof numberOfCoupons !== "number" || isNaN(numberOfCoupons) || !numberOfCoupons) {
           console.log("error", rows.indexOf(row) + 2);

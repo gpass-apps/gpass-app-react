@@ -42,6 +42,11 @@ export interface Range {
   userScannerIds?: string[];
 }
 
+export interface Coupon extends Ticket {
+  userEmployeeId?: string;
+  userEmployeeName?: string;
+}
+
 export interface Ticket {
   id?: string;
   eventId: string;
