@@ -125,3 +125,17 @@ export const mapExcelHeadersCoupons: Record<string, keyof User | "numberOfCoupon
 };
 
 export const validCouponColumns = Object.keys(mapExcelHeadersCoupons);
+
+export const couponReportColumns = [
+  { header: "Número", key: "number", width: 12 },
+  { header: "Correo del empleado", key: "userEmployeeId", width: 32 },
+  { header: "Nombre del empleado", key: "userEmployeeName", width: 28 },
+  { header: "Escaneado", key: "isScanned", width: 14 },
+  { header: "Fecha de escaneo", key: "dateScanned", width: 22 },
+  /*   { header: "Correo del embajador", key: "userAmbassadorId", width: 32 },
+    { header: "Nombre del embajador", key: "userAmbassadorName", width: 28 }, */
+  { header: "Correo del lector", key: "userScannerId", width: 32 },
+  { header: "Nombre del lector", key: "userScannerName", width: 28 },
+  { header: "Descargado", key: "isDownloaded", width: 14 },
+  { header: "Fecha de creación", key: "createAt", width: 22 }
+];

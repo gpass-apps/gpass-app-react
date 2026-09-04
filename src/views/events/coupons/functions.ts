@@ -1,4 +1,3 @@
-import { message } from "antd";
 import { RcFile } from "antd/es/upload";
 import { validCouponColumns, mapExcelHeadersCoupons } from "../../../constants";
 import { Event, UserUpload } from "../../../interfaces";

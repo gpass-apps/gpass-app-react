@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { QueryConstraint, limit, orderBy, where } from "firebase/firestore";
+import { QueryConstraint, Timestamp, limit, orderBy, where } from "firebase/firestore";
 import HeaderView from "../../../components/headerView";
 import Table, { PropsTable } from "../../../components/table";
 import { ColumnsType } from "antd/es/table";
@@ -57,7 +57,7 @@ const Tickets = () => {
       title: "Fecha escaneado",
       dataIndex: "dateScanned",
       key: "dateScanned",
-      render: (_, ticket) => (ticket.dateScanned ? dayjs(ticket.dateScanned).format("DD/MM/YYYY hh:mm a") : "")
+      render: (_, ticket) => (ticket.dateScanned ? dayjs((ticket.dateScanned as Date)).format("DD/MM/YYYY hh:mm a") : "")
     },
     {
       title: "Embajador",
