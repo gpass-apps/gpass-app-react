@@ -3,16 +3,17 @@ import { Button, Col, Row, Upload, message } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/es/table';
 import { useLocation } from "react-router-dom";
-import { QueryConstraint, limit, orderBy, where } from 'firebase/firestore';
+import { QueryConstraint, Timestamp, limit, orderBy, where } from 'firebase/firestore';
 import dayjs from 'dayjs';
-import { initEvent } from "../../../constants";
+import { couponReportColumns, initEvent } from "../../../constants";
 import HeaderView from "../../../components/headerView";
 import Table, { PropsTable } from '../../../components/table';
 import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, add, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
+import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
+import { downloadExcelOneWorkSheet } from "../../../utils/functions";
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
@@ -104,6 +105,35 @@ const Coupons = () => {
     }
   };
 
+  const downloadCouponsReport = async () => {
+    try {
+      const queryConstraints: QueryConstraint[] = [
+        where("eventId", "==", event.id),
+        orderBy("number", "asc")
+      ];
+
+      if (userFirestore?.role === "Embajador") {
+        queryConstraints.push(where("userAmbassadorId", "==", userFirestore.email || ""));
+      }
+
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
+      const rows = coupons.map((coupon) => ({
+        ...coupon,
+        isScanned: coupon.isScanned ? "Si" : "No",
+        dateScanned: coupon.dateScanned
+          ? dayjs((coupon.dateScanned as Timestamp).toDate()).format("DD/MM/YYYY hh:mm a")
+          : "",
+        createAt: dayjs((coupon.createAt as Timestamp).toDate()).format("DD/MM/YYYY hh:mm a"),
+        isDownloaded: coupon.isDownloaded ? "Si" : "No"
+      }));
+
+      await downloadExcelOneWorkSheet("Cupones", couponReportColumns, rows);
+    } catch (error) {
+      console.error(error);
+      message.error("No se pudo descargar el reporte de cupones.", 5);
+    }
+  };
+
   const uploadCoupons = async (file: RcFile) => {
     if (!file) {
       message.error("Error, archivo no encontrado.");
@@ -182,6 +212,7 @@ const Coupons = () => {
             icon={<DownloadOutlined />}
             shape="round"
             type="primary"
+            onClick={downloadCouponsReport}
           >
             Descargar reporte
           </Button>

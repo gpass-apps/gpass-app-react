@@ -3,6 +3,7 @@ import { UploadFile } from "antd/es/upload";
 import { FormRule } from 'antd';
 import { UploadListType } from 'antd/lib/upload/interface';
 import dayjs, { Dayjs } from "dayjs";
+import { Timestamp } from "firebase/firestore";
 
 export interface LatLng {
   lat: number;
@@ -52,13 +53,13 @@ export interface Ticket {
   eventId: string;
   number: number;
   isScanned: "Si" | "No";
-  dateScanned?: Date;
+  dateScanned?: Date | Timestamp | string;
   userAmbassadorId?: string;
   userAmbassadorName?: string;
   userScannerId?: string;
   userScannerName?: string;
   isDownloaded: boolean;
-  createAt: Date;
+  createAt: Date | Timestamp | string;
 }
 
 export type EventForm = Omit<Event, "initialDate" | "finalDate"> & {

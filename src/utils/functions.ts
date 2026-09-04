@@ -297,5 +297,23 @@ export const isObject = (value: unknown) => {
   return typeof value === "object" &&
     value !== null &&
     !Array.isArray(value);
-}
+};
+
+export const downloadExcelOneWorkSheet = async (worksheetName: string, columns: Partial<exceljs.Column>[], rows: Record<string, any>[]) => {
+  const workbook = new exceljs.Workbook();
+  const worksheet = workbook.addWorksheet(worksheetName);
+  worksheet.columns = columns;
+
+  worksheet.addRows(rows);
+
+  const data = await workbook.xlsx.writeBuffer();
+  const url = window.URL.createObjectURL(new Blob([data]));
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.setAttribute("download", `${worksheetName}.xlsx`);
+  a.click();
+  a.remove();
+};
+
 
