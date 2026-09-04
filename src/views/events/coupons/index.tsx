@@ -18,6 +18,7 @@ import { downloadExcelOneWorkSheet } from "../../../utils/functions";
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { userFirestore } = useAuth();
   const location = useLocation();
   const { state } = location;
@@ -106,6 +107,8 @@ const Coupons = () => {
   };
 
   const downloadCouponsReport = async () => {
+    setDownloading(true);
+
     try {
       const queryConstraints: QueryConstraint[] = [
         where("eventId", "==", event.id),
@@ -131,6 +134,8 @@ const Coupons = () => {
     } catch (error) {
       console.error(error);
       message.error("No se pudo descargar el reporte de cupones.", 5);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -213,8 +218,9 @@ const Coupons = () => {
             shape="round"
             type="primary"
             onClick={downloadCouponsReport}
+            loading={downloading}
           >
-            Descargar reporte
+            {downloading ? "Descargando reporte..." : "Descargar reporte"}
           </Button>
         </Col>
         <Col>
