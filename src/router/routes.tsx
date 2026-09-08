@@ -1,8 +1,7 @@
 import { lazy } from "react";
 import { PathRouteProps } from 'react-router-dom';
-import AssignTickets from "../views/events/assignTickets";
-import Coupons from "../views/events/coupons";
 
+const AssignTickets = lazy(() => import('../views/events/assignTickets'));
 const LandingPage = lazy(() => import('../views/landingPage'));
 const Companies = lazy(() => import('../views/companies'));
 const CompaniesRegister = lazy(() => import('../views/companies/create'));
@@ -13,6 +12,8 @@ const UsersRegister = lazy(() => import('../views/users/create'));
 const Scanner = lazy(() => import('../views/events/qr'));
 const Tickets = lazy(() => import('../views/events/tikets'));
 const Lectors = lazy(() => import('../views/events/lectors'));
+const CouponsByEvent = lazy(() => import('../views/events/coupons'));
+const Coupons = lazy(() => import('../views/coupons'));
 
 const routes: PathRouteProps[] = [
   {
@@ -73,6 +74,10 @@ const routes: PathRouteProps[] = [
   },
   {
     path: "/eventos/cupones",
+    element: <CouponsByEvent />
+  },
+  {
+    path: "/cupones",
     element: <Coupons />
   },
   {

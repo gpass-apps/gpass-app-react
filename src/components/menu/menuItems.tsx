@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { CalendarOutlined, SettingOutlined, ShopOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { CalendarOutlined, SettingOutlined, ShopOutlined, LogoutOutlined, UserOutlined, TagsFilled } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { message } from "antd";
 import { getAuth } from "firebase/auth";
@@ -29,6 +29,12 @@ const menuItems = [
     icon: <UserOutlined style={styleIcon} />
   },
   {
+    key: '/cupones',
+    title: '',
+    label: <Link to="/cupones">Cupones</Link>,
+    icon: <TagsFilled style={styleIcon} />
+  },
+  {
     key: '/configuracion',
     title: '',
     icon: <SettingOutlined style={styleIcon} />,
@@ -56,6 +62,6 @@ const menuItems = [
       }
     ]
   }
-]
+];
 
 export default menuItems;
