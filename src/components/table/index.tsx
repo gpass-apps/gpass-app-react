@@ -107,7 +107,7 @@ const Table = <T extends {}>({
 	useEffect(() => {
 		if (!triggerReload) return;
 
-		setTableData(prev => ({ ...prev, lastDoc: undefined, collection: "" }));
+		setTableData(prev => ({ ...prev, search: "", searchKey: "", lastDoc: undefined, collection: "" }));
 		setTimeout(() => {
 			setTableData(prev => ({ ...prev, collection }));
 		}, 200);
@@ -115,7 +115,7 @@ const Table = <T extends {}>({
 
 	const query = useMemo<QueryConstraint[]>(() => {
 		const { search, searchKey, lastDoc } = tableData;
-		const _query = [...queryProp];
+		let _query = [...queryProp];
 
 		if (search && typeof search === "string") {
 			const indexOrderBy = _query.findIndex(q => q.type === "orderBy");
@@ -125,6 +125,10 @@ const Table = <T extends {}>({
 			}
 
 			if (searchKey === "number") {
+				if (_query.some(q => q.type === "orderBy")) {
+					_query = _query.filter(q => q.type !== "orderBy");
+				}
+
 				_query.push(...[orderBy(searchKey), where(searchKey, "==", +search)]);
 			} else {
 				_query.push(...[orderBy(searchKey), startAt(search), endAt(search + '\uf8ff')]);

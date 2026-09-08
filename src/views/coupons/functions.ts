@@ -1,9 +1,9 @@
 import { RcFile } from "antd/es/upload";
-import { validCouponColumnsByEvent, mapExcelHeadersCouponsByEvent } from "../../../constants";
-import { Coupon, Event, UserUpload } from "../../../interfaces";
-import { getWorkbookFromFile, isObject } from "../../../utils/functions";
+import { validCouponColumns, mapExcelHeadersCoupons } from "../../constants";
+import { Coupon, Event, UserUpload } from "../../interfaces";
+import { getWorkbookFromFile, isObject } from "../../utils/functions";
 import { QueryConstraint, where, orderBy, limit } from "firebase/firestore";
-import { getCollectionGeneric } from "../../../services/firebase";
+import { getCollectionGeneric } from "../../services/firebase";
 
 export const getUsersUploadFromExcel = async (file: RcFile, event: Event) => {
   const workbook = await getWorkbookFromFile(file);
@@ -16,13 +16,13 @@ export const getUsersUploadFromExcel = async (file: RcFile, event: Event) => {
   const users: UserUpload[] = [];
   const headers = (worksheet.getRow(1).values as string[]).slice(1).map(h => h.toLocaleLowerCase());
 
-  const invalidColumns = headers.filter(h => !validCouponColumnsByEvent.includes(h));
+  const invalidColumns = headers.filter(h => !validCouponColumns.includes(h));
 
   if (invalidColumns.length) {
     throw new Error(`Columnas inválidas: ${invalidColumns.join(", ")}`);
   }
 
-  const userKeys = headers.map(h => mapExcelHeadersCouponsByEvent[h]);
+  const userKeys = headers.map(h => mapExcelHeadersCoupons[h]);
   const rows = worksheet
     .getSheetValues()
     .slice(2)
@@ -74,7 +74,7 @@ export const getUsersUploadFromExcel = async (file: RcFile, event: Event) => {
   return users;
 };
 
-export const getLastCouponNumber = async (eventId: string) => {
+export const getLastCouponNumberByEventName = async (eventId: string) => {
   try {
     const queryConstraints: QueryConstraint[] = [
       where("eventId", "==", eventId),

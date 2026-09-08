@@ -24,9 +24,10 @@ export const privateRoutesByUser: Record<Rols, string[]> = {
     "/usuarios/registrar",
     "/usuarios/editar",
     "/lector",
+    "/cupones"
   ],
-  'Administrador': ["/eventos", "/usuarios", "/usuarios/registrar", "/lector", "/eventos/boletos", "/eventos/registrar", "/eventos/asignar-boletos", "/eventos/lectores", "/eventos/cupones"],
-  'Embajador': ["/eventos", "/lector", "/eventos/boletos", "/eventos/cupones"],
+  'Administrador': ["/eventos", "/usuarios", "/usuarios/registrar", "/lector", "/eventos/boletos", "/eventos/registrar", "/eventos/asignar-boletos", "/eventos/lectores", "/eventos/cupones", "/cupones"],
+  'Embajador': ["/eventos", "/lector", "/eventos/boletos", "/eventos/cupones", "/cupones"],
   'Lector': ["/eventos", "/lector"],
   "Empleado": []
 };
@@ -113,7 +114,6 @@ export const titleForm: Record<TypeRute, string> = {
   update: "Editar"
 } as const;
 
-
 export const mapExcelHeadersCoupons: Record<string, keyof User | "numberOfCoupons"> = {
   "nombre": "name",
   "zona": "zone",
@@ -125,6 +125,17 @@ export const mapExcelHeadersCoupons: Record<string, keyof User | "numberOfCoupon
 };
 
 export const validCouponColumns = Object.keys(mapExcelHeadersCoupons);
+
+export const mapExcelHeadersCouponsByEvent: Record<string, keyof User | "numberOfCoupons"> = {
+  "nombre": "name",
+  "zona": "zone",
+  "estado": "state",
+  "celular": "phone",
+  "email": "email",
+  "cantidad de cupones": "numberOfCoupons"
+};
+
+export const validCouponColumnsByEvent = Object.keys(mapExcelHeadersCouponsByEvent);
 
 export const couponReportColumns = [
   { header: "Número", key: "number", width: 12 },

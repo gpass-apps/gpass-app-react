@@ -44,6 +44,7 @@ export interface Range {
 }
 
 export interface Coupon extends Ticket {
+  eventName: string;
   userEmployeeId?: string;
   userEmployeeName?: string;
 }

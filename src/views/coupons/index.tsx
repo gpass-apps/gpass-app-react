@@ -2,37 +2,30 @@ import { useMemo, useState } from "react";
 import { Button, Col, Row, Upload, message } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/es/table';
-import { useLocation } from "react-router-dom";
 import { QueryConstraint, Timestamp, limit, orderBy, where } from 'firebase/firestore';
 import dayjs from 'dayjs';
-import { couponReportColumns, initEvent } from "../../../constants";
-import HeaderView from "../../../components/headerView";
-import Table, { PropsTable } from '../../../components/table';
-import { Event, User, Coupon } from "../../../interfaces";
+import { couponReportColumns, initEvent } from "../../constants";
+import HeaderView from "../../components/headerView";
+import Table, { PropsTable } from '../../components/table';
+import { Event, User, Coupon } from "../../interfaces";
 import { RcFile } from "antd/lib/upload";
-import { getLastCouponNumber, getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
-import { useAuth } from "../../../context/authContext";
-import { downloadExcelOneWorkSheet } from "../../../utils/functions";
+import { getUsersUploadFromExcel } from "./functions";
+import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../services/firebase';
+import { useAuth } from "../../context/authContext";
+import { downloadExcelOneWorkSheet } from "../../utils/functions";
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const { userFirestore } = useAuth();
-  const location = useLocation();
-  const { state } = location;
-
-  const event = useMemo(() => {
-    if (state) {
-      return state as Event;
-    }
-
-    window.location.href = "/eventos";
-    return initEvent;
-  }, [state]);
 
   const columns: ColumnsType<Coupon> = useMemo(() => [
+    {
+      title: 'Evento',
+      dataIndex: 'eventName',
+      key: 'eventName'
+    },
     {
       title: 'Número',
       dataIndex: 'number',
@@ -49,10 +42,8 @@ const Coupons = () => {
   ], []);
 
   const query = useMemo<QueryConstraint[]>(() => {
-    if (!event?.id) return [];
-
     const queryConstraints: QueryConstraint[] = [
-      where("eventId", "==", event.id),
+      orderBy("eventName", "asc"),
       orderBy("number", "asc"),
       limit(20)
     ];
@@ -62,7 +53,7 @@ const Coupons = () => {
     }
 
     return queryConstraints;
-  }, [event?.id, userFirestore]);
+  }, [userFirestore]);
 
   const propsTable = useMemo<PropsTable<Coupon>>(() => ({
     triggerReload,
@@ -94,7 +85,6 @@ const Coupons = () => {
 
     try {
       const queryConstraints: QueryConstraint[] = [
-        where("eventId", "==", event.id),
         orderBy("number", "asc")
       ];
 
@@ -131,26 +121,26 @@ const Coupons = () => {
     setUploading(true);
 
     try {
-      let lastNumber = await getLastCouponNumber(event.id!);
-      const usersUpload = await getUsersUploadFromExcel(file, event);
+      //let lastNumber = await getLastCouponNumber(eventSelected!.id!);
+      //const usersUpload = await getUsersUploadFromExcel(file, eventSelected!);
 
-      const users = usersUpload.map((u) => {
-        const userCopy = { ...u, id: u.email };
-        delete userCopy.numberOfCoupons;
-        return userCopy;
-      }) as User[];
+      /*  const users = usersUpload.map((u) => {
+         const userCopy = { ...u, id: u.email };
+         delete userCopy.numberOfCoupons;
+         return userCopy;
+       }) as User[]; */
 
-      await bulkSetDocuments("Users", users);
+      //await bulkSetDocuments("Users", users);
 
       const coupons: Coupon[] = [];
 
-      for (const u of usersUpload) {
+      /* for (const u of usersUpload) {
         for (let i = 1; i <= u.numberOfCoupons!; i++) {
           lastNumber += 1;
 
           const couponData: Coupon = {
-            eventId: event.id!,
-            eventName: event!.name,
+            eventId: eventSelected.id!,
+            eventName: eventSelected.name,
             number: lastNumber,
             isScanned: "No",
             isDownloaded: false,
@@ -161,7 +151,7 @@ const Coupons = () => {
 
           coupons.push(couponData);
         }
-      }
+      } */
 
       await bulkAddDocuments("Coupons", coupons);
 
@@ -187,7 +177,7 @@ const Coupons = () => {
     <div style={{ margin: 20 }}>
       <HeaderView
         path="/eventos"
-        title={`Cupones ${event.name}`}
+        title={`Cupones`}
         goBack
       />
       <Row
@@ -231,6 +221,7 @@ const Coupons = () => {
           </Upload>
         </Col>
       </Row>
+
       <Table
         {...propsTable}
       />
