@@ -10,7 +10,7 @@ import { DocumentData, DocumentSnapshot, QueryConstraint, endAt, orderBy, startA
 import { Document, Page, Image, StyleSheet, pdf } from '@react-pdf/renderer';
 import { Button } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
-import { Ticket } from "../../interfaces";
+import { Ticket, Coupon } from "../../interfaces";
 import { post } from './../../services/index';
 import useAbortController from "./../../hooks/useAbortController";
 import { useLocation } from 'react-router-dom';
@@ -38,6 +38,7 @@ export interface PropsTable<T> extends PropsUseCollection {
 	searchValues: Record<string, string>;
 	removeTableActions?: boolean;
 	downloadPdf?: boolean;
+	downloadPdfCoupons?: boolean;
 	imageEventUrl?: string;
 	onLoadData?: (data: T[]) => void;
 	optiosSearchValues?: OptiosSearchValues[];
@@ -88,6 +89,7 @@ const Table = <T extends {}>({
 	searchValues,
 	removeTableActions,
 	downloadPdf,
+	downloadPdfCoupons,
 	imageEventUrl,
 	onLoadData,
 	optiosSearchValues,
@@ -241,7 +243,7 @@ const Table = <T extends {}>({
 									const url = window.URL.createObjectURL(blob);
 									const a = document.createElement('a');
 									a.href = url;
-									a.download = `${t?.userAmbassadorName || ""}_Ticket-${t.number}_${formattedDate}`;
+									a.download = `${t?.userAmbassadorName || ""}_Ticket-${t.number}_${formattedDate}.pdf`;
 									a.click();
 									a.remove();
 
@@ -249,6 +251,73 @@ const Table = <T extends {}>({
 
 									if (!t.isDownloaded) {
 										await update("Tickets", t.id as string, { ...t, isDownloaded: true });
+									}
+								}}
+							/>
+						</>
+					);
+				}
+			});
+		}
+
+		if (downloadPdfCoupons) {
+			columnsProp.push({
+				title: "Descargar QR",
+				dataIndex: "downlaodQr",
+				key: "downlaodQr",
+				render: (_, coupon) => {
+					const t = coupon as any as Coupon;
+
+					return (
+						<>
+							<Button
+								icon={<DownloadOutlined style={{ color: t.isDownloaded ? '#ffffff' : "" }} />}
+								style={{ backgroundColor: t.isDownloaded ? '#34d960' : "" }}
+								onClick={async () => {
+									const canvasQr = document.getElementById(t.number.toString()) as HTMLCanvasElement | null;
+
+									if (!canvasQr) {
+										message.error("Error al descargar el cupon, intentelo de nuevo", 4);
+										return;
+									}
+
+									const newWidth = 400;
+									const newHeight = 400;
+									const resizedCanvas = document.createElement("canvas");
+
+									resizedCanvas.width = newWidth;
+									resizedCanvas.height = newHeight;
+
+									const ctx = resizedCanvas.getContext("2d");
+
+									ctx?.drawImage(canvasQr, 0, 0, newWidth, newHeight);
+
+									const couponUrl = resizedCanvas.toDataURL("image/octet-stream");
+
+									const blob = await pdf(<Document>
+										<Page size={{ width: 440, height: 800 }} style={stylesPDF.page}>
+											<Image src={imageEventUrl} style={stylesPDF.backgroundImage} />
+											{
+												<Image
+													src={couponUrl}
+													style={stylesPDF.qrImage}
+												/>
+											}
+										</Page>
+									</Document>).toBlob();
+
+									const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
+									const url = window.URL.createObjectURL(blob);
+									const a = document.createElement('a');
+									a.href = url;
+									a.download = `${t?.userEmployeeId || ""}_Cupon-${t.number}_${formattedDate}.pdf`;
+									a.click();
+									a.remove();
+
+									setData(prev => prev.map(_coupon => _coupon.id === t.id ? ({ ..._coupon, isDownloaded: true }) as any as Coupon : _coupon) as (T & { id: string; })[]);
+
+									if (!t.isDownloaded) {
+										await update("Coupons", t.id as string, { ...t, isDownloaded: true });
 									}
 								}}
 							/>
@@ -293,7 +362,7 @@ const Table = <T extends {}>({
 				},
 			}
 		];
-	}, [columnsProp, pathEdit, collection, removeTableActions, downloadPdf, imageEventUrl, setData, path, deleteUser, user?.displayName]);
+	}, [columnsProp, pathEdit, collection, removeTableActions, downloadPdf, downloadPdfCoupons, imageEventUrl, setData, path, deleteUser, user?.displayName]);
 
 	return (
 		<div>

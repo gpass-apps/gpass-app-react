@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { QueryConstraint, Timestamp, limit, orderBy, where } from "firebase/firestore";
+import { QueryConstraint, limit, orderBy, where } from "firebase/firestore";
 import HeaderView from "../../../components/headerView";
 import Table, { PropsTable } from "../../../components/table";
 import { ColumnsType } from "antd/es/table";
