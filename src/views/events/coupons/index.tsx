@@ -14,6 +14,7 @@ import { getLastCouponNumber, getUsersUploadFromExcel } from "./functions";
 import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../../utils/functions";
+import { QRCodeCanvas } from "qrcode.react";
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
@@ -45,8 +46,20 @@ const Coupons = () => {
       dataIndex: 'createAt',
       key: 'createAt',
       render: (date) => (date ? dayjs(date.toDate ? date.toDate() : date).format('DD/MM/YYYY hh:mm a') : '')
+    },
+    {
+      title: "",
+      dataIndex: "qr",
+      key: "qr",
+      render: (_, coupon) => (
+        <QRCodeCanvas
+          value={`${event?.id}-${coupon.number}`}
+          id={coupon.number.toString()}
+          style={{ display: "none" }}
+        />
+      )
     }
-  ], []);
+  ], [event]);
 
   const query = useMemo<QueryConstraint[]>(() => {
     if (!event?.id) return [];
@@ -77,6 +90,8 @@ const Coupons = () => {
     },
     disabledFilter: false,
     disableDisabledFilter: true,
+    downloadPdfCoupons: true,
+    imageEventUrl: event?.image as string,
     optiosSearchValues: [
       {
         propSearch: "isScanned",

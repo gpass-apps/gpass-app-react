@@ -2,7 +2,7 @@ import HeaderView from '../../../components/headerView';
 import { useState, useMemo } from 'react';
 import { Alert, Button, message, Modal, Space } from 'antd'
 import { useLocation } from 'react-router-dom';
-import { Ticket, Event } from '../../../interfaces';
+import { Ticket, Coupon, Event } from '../../../interfaces';
 import { initEvent } from '../../../constants';
 import { update, getCollectionGeneric, getGenericDocById } from '../../../services/firebase';
 import { Timestamp, where } from 'firebase/firestore';
@@ -43,21 +43,13 @@ const Qr = () => {
   const handleScanResult: OnResultFunction = async (result) => {
     if (!result) return
     setScanActive(false)
+
     try {
       const [eventId, numberTicket] = result.getText().split("-");
+
       const responseEvent = await getGenericDocById<Event>('Events', eventId)
-      const tickets = await getCollectionGeneric<Ticket>('Tickets', [where('eventId', '==', eventId), where('number', '==', + numberTicket)])
+
       const finalDate = responseEvent.finalDate as any as Timestamp;
-
-      // if (eventId !== event.id) {
-      //   setIsModalData({
-      //     message: `Este boleto no coincide con el evento - ${event?.name.toUpperCase()}`,
-      //     description: "favor de seleccionar un boleto correspondiente al evento.",
-      //     type: "error"
-      //   })
-
-      //   return
-      // }
 
       if (responseEvent.disabled) {
         setIsModalData({
@@ -72,34 +64,108 @@ const Qr = () => {
       if (finalDate.toDate() < new Date()) {
         setIsModalData({
           message: `Este evento se encuentra vencido.`,
-          description: "favor de intentar con otro boleto válido",
+          description: "favor de intentar con otro boleto o cupón válido",
           type: "error"
         })
 
         return
       }
 
-      if (tickets[0].isScanned === "Si") {
+      const tickets = await getCollectionGeneric<Ticket>(
+        'Tickets',
+        [
+          where('eventId', '==', eventId),
+          where('number', '==', +numberTicket)
+        ]
+      )
+
+      if (tickets.length > 0) {
+
+        if (tickets[0].isScanned === "Si") {
+          setIsModalData({
+            message: `Este QR ya esta escaneado.`,
+            description: "favor de intentar con otro boleto válido",
+            type: "error"
+          })
+
+          return
+        }
+
+        await update(
+          'Tickets',
+          tickets[0].id!,
+          {
+            userScannerId: user?.uid,
+            userScannerName: userFirestore?.name,
+            isScanned: "Si",
+            dateScanned: new Date()
+          }
+        )
+
         setIsModalData({
-          message: `Este QR ya esta escaneado.`,
-          description: "favor de intentar con otro boleto válido",
-          type: "error"
+          message: responseEvent?.textExchange !== ""
+            ? `${responseEvent?.textExchange}. QR numero ${numberTicket} del evento.`
+            : `Listo ya puedes otorgar la Pizza del QR numero ${numberTicket} del evento.`,
+          description: "Gracias por su apoyo.",
+          type: "success"
         })
 
         return
       }
 
-      await update('Tickets', tickets[0].id!, { userScannerId: user?.uid, userScannerName: userFirestore?.name, isScanned: "Si", dateScanned: new Date() })
+      const coupons = await getCollectionGeneric<Coupon>(
+        'Coupons',
+        [
+          where('eventId', '==', eventId),
+          where('number', '==', +numberTicket)
+        ]
+      )
+
+      // Si encuentra Coupon
+      if (coupons.length > 0) {
+
+        if (coupons[0].isScanned === "Si") {
+          setIsModalData({
+            message: `Este QR ya esta escaneado.`,
+            description: "favor de intentar con otro cupón válido",
+            type: "error"
+          })
+
+          return
+        }
+
+        await update(
+          'Coupons',
+          coupons[0].id!,
+          {
+            userEmployeeId: user?.uid,
+            userEmployeeName: userFirestore?.name,
+            isScanned: "Si",
+            dateScanned: new Date()
+          }
+        )
+
+        setIsModalData({
+          message: responseEvent?.textExchange !== ""
+            ? `${responseEvent?.textExchange}. QR numero ${numberTicket} del evento.`
+            : `Listo ya puedes otorgar la Pizza del QR numero ${numberTicket} del evento.`,
+          description: "Gracias por su apoyo.",
+          type: "success"
+        })
+
+        return
+      }
+
       setIsModalData({
-        message: responseEvent?.textExchange !== "" ? `${responseEvent?.textExchange}. QR numero ${numberTicket} del evento.` : `Listo ya puedes otorgar la Pizza del QR numero ${numberTicket} del evento.`,
-        description: "Gracias por su apoyo.",
-        type: "success"
+        message: `QR no válido.`,
+        description: "No se encontró ningún boleto o cupón válido.",
+        type: "error"
       })
+
     } catch (error) {
       message.error('Error al procesar QR.', 4);
     } finally {
       setIsModalOpen(true)
-
     }
   };
 
@@ -110,7 +176,7 @@ const Qr = () => {
         goBack
         title={"Lector de Boletos - " + event?.name}
       />
-      {/* <QrCode /> */}
+
       {scanActive ? (
         <QRScan
           offCamera={!isModalOpen}
@@ -131,8 +197,17 @@ const Qr = () => {
             type={modalData.type}
             showIcon
           />
+
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <Button type="primary" onClick={() => { setScanActive(true); setIsModalOpen(false); }}>Listo</Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                setScanActive(true);
+                setIsModalOpen(false);
+              }}
+            >
+              Listo
+            </Button>
           </div>
         </Space>
       </Modal>
