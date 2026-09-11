@@ -127,7 +127,7 @@ const Coupons = () => {
         ]
       }
     ]
-  }), [columns, query, triggerReload]);
+  }), [columns, query, triggerReload, event.image]);
 
   const downloadCouponsPDF = async () => {
     setDownloadingPdf(true);

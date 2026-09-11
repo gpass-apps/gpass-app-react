@@ -3,11 +3,10 @@ import { QueryConstraint, limit, orderBy, where } from "firebase/firestore";
 import HeaderView from "../../../components/headerView";
 import Table, { PropsTable } from "../../../components/table";
 import { ColumnsType } from "antd/es/table";
-import { Event, Ticket, User } from "../../../interfaces";
+import { Event, Ticket } from "../../../interfaces";
 import { useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import { QRCodeCanvas } from "qrcode.react";
-import useCollection, { PropsUseCollection } from "../../../hooks/useCollection";
 import { Form } from "antd";
 import { useAuth } from "../../../context/authContext";
 
@@ -19,11 +18,6 @@ const Tickets = () => {
   const { user } = useAuth();
   const location = useLocation();
   const { state } = location;
-  const propsUseCollection = useMemo<PropsUseCollection>(() => ({
-    collection: "Users",
-    query: [where("role", "in", ["Embajador", "Lector"])]
-  }), []);
-  const { loading, data: users } = useCollection<User>(propsUseCollection);
   const [tickets, setTickets] = useState<TicketTable[]>([]);
   const [form] = Form.useForm();
 
@@ -73,7 +67,7 @@ const Tickets = () => {
         <QRCodeCanvas value={`${event?.id}-${ticket.number}`} id={ticket.number.toString()} style={{ display: "none" }} />
       )
     }
-  ], [event, users]);
+  ], [event]);
 
   const query = useMemo<QueryConstraint[]>(() => {
     const query = [where("eventId", "==", event?.id || ""), orderBy("number"), limit(20)];
@@ -90,7 +84,6 @@ const Tickets = () => {
   }, [event, user]);
 
   const propsTable = useMemo<PropsTable<TicketTable>>(() => ({
-    wait: loading,
     columns: columns,
     placeholderSearch: "Buscar por nombre embajador / lector,numero...",
     collection: "Tickets",
@@ -126,7 +119,7 @@ const Tickets = () => {
     downloadPdf: true,
     imageEventUrl: event?.image as string,
     onLoadData: setTickets
-  }), [event, columns, loading, query]);
+  }), [event, columns, query]);
 
   return (
     <div style={{ margin: 20 }}>
