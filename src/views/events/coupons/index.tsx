@@ -11,11 +11,33 @@ import Table, { PropsTable } from '../../../components/table';
 import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getLastCouponNumber, getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
+import { getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../../utils/functions";
 import { post } from "../../../services";
 import { QRCodeCanvas } from "qrcode.react";
+import { Document, Page, Image, StyleSheet, pdf } from '@react-pdf/renderer';
+
+const stylesPDF = StyleSheet.create({
+  page: {
+    flexDirection: 'column',
+    backgroundColor: '#FFFFFF',
+    position: 'relative',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  qrImage: {
+    position: 'absolute',
+    top: '45%',
+    left: '48%',
+    transform: 'translate(-50%, -50%)',
+    width: 120, // Ajusta el tamaño del código QR según tus necesidades
+    height: 120,
+  },
+});
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
@@ -103,7 +125,7 @@ const Coupons = () => {
         ]
       }
     ]
-  }), [columns, query, triggerReload]);
+  }), [columns, query, triggerReload, event?.image]);
 
   const downloadCouponsReport = async () => {
     setDownloading(true);
@@ -133,6 +155,99 @@ const Coupons = () => {
     } catch (error) {
       console.error(error);
       message.error("No se pudo descargar el reporte de cupones.", 5);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const downloadCoupons = async () => {
+    setDownloading(true);
+
+    try {
+      const queryConstraints: QueryConstraint[] = [
+        where("eventId", "==", event.id),
+        orderBy("number", "asc")
+      ];
+
+      if (userFirestore?.role === "Embajador") {
+        queryConstraints.push(where("userAmbassadorId", "==", userFirestore.email || ""));
+      }
+
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
+      for (const t of coupons) {
+
+        const canvasQr = document.getElementById(
+          t.number.toString()
+        ) as HTMLCanvasElement | null;
+
+        if (!canvasQr) {
+          message.error(
+            `Error al descargar el cupon, intentelo de nuevo`,
+            4
+          );
+          return;
+        }
+
+        const newWidth = 400;
+        const newHeight = 400;
+
+        const resizedCanvas = document.createElement("canvas");
+
+        resizedCanvas.width = newWidth;
+        resizedCanvas.height = newHeight;
+
+        const ctx = resizedCanvas.getContext("2d");
+
+        ctx?.drawImage(
+          canvasQr,
+          0,
+          0,
+          newWidth,
+          newHeight
+        );
+
+        const qrUrl = resizedCanvas.toDataURL(
+          "image/octet-stream"
+        );
+
+        const blob = await pdf(
+          <Document>
+            <Page
+              size={{ width: 440, height: 800 }}
+              style={stylesPDF.page}
+            >
+              <Image
+                src={imageEventUrl}
+                style={stylesPDF.backgroundImage}
+              />
+
+              <Image
+                src={qrUrl}
+                style={stylesPDF.qrImage}
+              />
+            </Page>
+          </Document>
+        ).toBlob();
+
+        const formattedDate = dayjs().format(
+          'DD-MM-YYYY-HH-mm-ss'
+        );
+
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+
+        a.download = `${t?.userEmployeeId}_"Cupones"_${formattedDate}.pdf`;
+
+        a.click();
+        a.remove();
+
+      }
+
+    } catch (error) {
+      console.error(error);
+      message.error("No se pudo descargar los cupones.", 5);
     } finally {
       setDownloading(false);
     }
@@ -211,6 +326,17 @@ const Coupons = () => {
         gutter={10}
         style={{ marginBottom: 20 }}
       >
+        <Col>
+          <Button
+            icon={<DownloadOutlined />}
+            shape="round"
+            type="primary"
+            onClick={downloadCoupons}
+            loading={downloading}
+          >
+            {downloading ? "Descargando cupones" : "Descargar cupones"}
+          </Button>
+        </Col>
         <Col>
           <Button
             icon={<DownloadOutlined />}

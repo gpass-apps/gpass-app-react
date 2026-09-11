@@ -200,10 +200,22 @@ const Coupons = () => {
             onClick={downloadCouponsReport}
             loading={downloading}
           >
+            {downloading ? "Descargando cupones" : "Descargar cupones"}
+          </Button>
+        </Col>
+        <Col>
+          <Button
+            icon={<DownloadOutlined />}
+            shape="round"
+            type="primary"
+            onClick={downloadCouponsReport}
+            loading={downloading}
+          >
             {downloading ? "Descargando reporte..." : "Descargar reporte"}
           </Button>
         </Col>
         <Col>
+
           <Upload
             beforeUpload={(file) => {
               uploadCoupons(file);
