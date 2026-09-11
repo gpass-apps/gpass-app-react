@@ -4,15 +4,17 @@ import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/es/table';
 import { QueryConstraint, Timestamp, limit, orderBy, where } from 'firebase/firestore';
 import dayjs from 'dayjs';
-import { couponReportColumns, initEvent } from "../../constants";
+import { couponReportColumns } from "../../constants";
 import HeaderView from "../../components/headerView";
 import Table, { PropsTable } from '../../components/table';
-import { Event, User, Coupon } from "../../interfaces";
+import { Coupon, User } from "../../interfaces";
 import { RcFile } from "antd/lib/upload";
-import { getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../services/firebase';
+import { getLastCouponNumberByEventsName, getUsersUploadFromExcel } from "./functions";
+import { getCollectionGeneric, bulkAddDocuments, bulkSetDocuments } from '../../services/firebase';
 import { useAuth } from "../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../utils/functions";
+import events from "../events";
+import { post } from "../../services";
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
@@ -121,26 +123,30 @@ const Coupons = () => {
     setUploading(true);
 
     try {
-      //let lastNumber = await getLastCouponNumber(eventSelected!.id!);
-      //const usersUpload = await getUsersUploadFromExcel(file, eventSelected!);
+      const { lastNumbersByEvent, events } = await getLastCouponNumberByEventsName();
 
-      /*  const users = usersUpload.map((u) => {
-         const userCopy = { ...u, id: u.email };
-         delete userCopy.numberOfCoupons;
-         return userCopy;
-       }) as User[]; */
+      const usersUpload = await getUsersUploadFromExcel(file, events);
 
-      //await bulkSetDocuments("Users", users);
+      const users = usersUpload.map((u) => {
+        const userCopy = { ...u, id: u.email };
+        delete userCopy.numberOfCoupons;
+
+        return userCopy;
+      }) as User[];
+
+      await post("/users/createByCoupons", users);
 
       const coupons: Coupon[] = [];
 
-      /* for (const u of usersUpload) {
+      for (const u of usersUpload) {
         for (let i = 1; i <= u.numberOfCoupons!; i++) {
+          let lastNumber = lastNumbersByEvent[u.eventId!] || 0;
+
           lastNumber += 1;
 
           const couponData: Coupon = {
-            eventId: eventSelected.id!,
-            eventName: eventSelected.name,
+            eventId: events.find(e => e.name === u.eventName)?.id || "",
+            eventName: u.eventName!,
             number: lastNumber,
             isScanned: "No",
             isDownloaded: false,
@@ -151,7 +157,7 @@ const Coupons = () => {
 
           coupons.push(couponData);
         }
-      } */
+      }
 
       await bulkAddDocuments("Coupons", coupons);
 

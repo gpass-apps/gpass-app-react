@@ -96,6 +96,8 @@ export interface User {
 }
 
 export interface UserUpload extends User {
+  eventId?: string;
+  eventName?: string;
   numberOfCoupons?: number;
 }
 

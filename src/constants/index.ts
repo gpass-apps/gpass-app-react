@@ -1,6 +1,6 @@
 import { FormRule } from "antd";
 import { Rols, TypeRute } from "../types";
-import { Company, User, EventForm, Event } from "../interfaces";
+import { Company, User, EventForm, Event, UserUpload } from "../interfaces";
 import dayjs from "dayjs";
 
 export const baseUrlStorage = "https://firebasestorage.googleapis.com/v0/b/gpass-apps.appspot.com/o/";
@@ -114,7 +114,8 @@ export const titleForm: Record<TypeRute, string> = {
   update: "Editar"
 } as const;
 
-export const mapExcelHeadersCoupons: Record<string, keyof User | "numberOfCoupons"> = {
+export const mapExcelHeadersCoupons: Record<string, keyof UserUpload | "numberOfCoupons"> = {
+  "nombre del evento": "eventName",
   "nombre": "name",
   "zona": "zone",
   "sucursal": "companyName",
