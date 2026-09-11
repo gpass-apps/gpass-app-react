@@ -130,6 +130,7 @@ export const validCouponColumns = Object.keys(mapExcelHeadersCoupons);
 export const mapExcelHeadersCouponsByEvent: Record<string, keyof User | "numberOfCoupons"> = {
   "nombre": "name",
   "zona": "zone",
+  "sucursal": "companyName",
   "estado": "state",
   "celular": "phone",
   "email": "email",

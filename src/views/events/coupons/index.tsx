@@ -14,6 +14,7 @@ import { getLastCouponNumber, getUsersUploadFromExcel } from "./functions";
 import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../../utils/functions";
+import { post } from "../../../services";
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
@@ -140,7 +141,7 @@ const Coupons = () => {
         return userCopy;
       }) as User[];
 
-      await bulkSetDocuments("Users", users);
+      await post("/users/createByCoupons", users.map(u => ({ ...u, eventId: event.id })));
 
       const coupons: Coupon[] = [];
 

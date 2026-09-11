@@ -10,10 +10,9 @@ import Table, { PropsTable } from '../../components/table';
 import { Coupon, User } from "../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getLastCouponNumberByEventsName, getUsersUploadFromExcel } from "./functions";
-import { getCollectionGeneric, bulkAddDocuments, bulkSetDocuments } from '../../services/firebase';
+import { getCollectionGeneric, bulkAddDocuments } from '../../services/firebase';
 import { useAuth } from "../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../utils/functions";
-import events from "../events";
 import { post } from "../../services";
 
 const Coupons = () => {
@@ -137,17 +136,19 @@ const Coupons = () => {
       await post("/users/createByCoupons", users);
 
       const coupons: Coupon[] = [];
+      const currentNumbersByEvent: Record<string, number> = { ...lastNumbersByEvent };
 
       for (const u of usersUpload) {
-        for (let i = 1; i <= u.numberOfCoupons!; i++) {
-          let lastNumber = lastNumbersByEvent[u.eventId!] || 0;
+        const eventId = u.eventId || events.find(e => e.name === u.eventName)?.id || "";
 
-          lastNumber += 1;
+        for (let i = 1; i <= u.numberOfCoupons!; i++) {
+          const nextNumber = (currentNumbersByEvent[eventId] || 0) + 1;
+          currentNumbersByEvent[eventId] = nextNumber;
 
           const couponData: Coupon = {
-            eventId: events.find(e => e.name === u.eventName)?.id || "",
+            eventId,
             eventName: u.eventName!,
-            number: lastNumber,
+            number: nextNumber,
             isScanned: "No",
             isDownloaded: false,
             createAt: new Date(),
