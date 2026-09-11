@@ -11,16 +11,40 @@ import Table, { PropsTable } from '../../../components/table';
 import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getLastCouponNumber, getUsersUploadFromExcel } from "./functions";
-import { bulkSetDocuments, getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
+import { getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
 import { useAuth } from "../../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../../utils/functions";
 import { post } from "../../../services";
 import { QRCodeCanvas } from "qrcode.react";
+import QRCode from "qrcode";
+import { Document, Page, Image, StyleSheet, pdf } from '@react-pdf/renderer';
+
+const stylesPDF = StyleSheet.create({
+  page: {
+    flexDirection: 'column',
+    backgroundColor: '#FFFFFF',
+    position: 'relative',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  qrImage: {
+    position: 'absolute',
+    top: '45%',
+    left: '48%',
+    transform: 'translate(-50%, -50%)',
+    width: 120,
+    height: 120,
+  },
+});
 
 const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const { userFirestore } = useAuth();
   const location = useLocation();
   const { state } = location;
@@ -103,7 +127,81 @@ const Coupons = () => {
         ]
       }
     ]
-  }), [columns, query, triggerReload]);
+  }), [columns, query, triggerReload, event.image]);
+
+  const downloadCouponsPDF = async () => {
+    setDownloadingPdf(true);
+
+    try {
+      const queryConstraints: QueryConstraint[] = [
+        where("eventId", "==", event.id),
+        orderBy("number", "asc")
+      ];
+
+      if (userFirestore?.role === "Embajador") {
+        queryConstraints.push(where("userAmbassadorId", "==", userFirestore.email || ""));
+      }
+
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
+
+      if (!coupons.length) {
+        message.info("No hay cupones para descargar.");
+        setDownloadingPdf(false);
+        return;
+      }
+
+      const qrUrls = await Promise.all(
+        coupons.map(async (coupon) => ({
+          coupon,
+          qrUrl: await QRCode.toDataURL(`${event?.id}-${coupon.number}`, { width: 400, margin: 1 }),
+        }))
+      );
+
+      if (!qrUrls.length) {
+        message.error("Error al generar los códigos QR de los cupones.");
+        return;
+      }
+
+      const blob = await pdf(
+        <Document>
+          {qrUrls.map(({ coupon, qrUrl }) => (
+            <Page
+              key={coupon.id || coupon.number}
+              size={{ width: 440, height: 800 }}
+              style={stylesPDF.page}
+            >
+              {typeof event?.image === "string" && (
+                <Image
+                  src={event.image}
+                  style={stylesPDF.backgroundImage}
+                />
+              )}
+              <Image
+                src={qrUrl}
+                style={stylesPDF.qrImage}
+              />
+            </Page>
+          ))}
+        </Document>
+      ).toBlob();
+
+      const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Cupones_${event?.name || 'Evento'}_${formattedDate}.pdf`;
+      a.click();
+      a.remove();
+
+      message.success("PDF de cupones descargado con éxito!", 5);
+    } catch (error) {
+      console.error(error);
+      message.error("Error al descargar PDF de cupones.", 5);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const downloadCouponsReport = async () => {
     setDownloading(true);
@@ -220,6 +318,17 @@ const Coupons = () => {
             loading={downloading}
           >
             {downloading ? "Descargando reporte..." : "Descargar reporte"}
+          </Button>
+        </Col>
+        <Col>
+          <Button
+            icon={<DownloadOutlined />}
+            shape="round"
+            type="primary"
+            onClick={downloadCouponsPDF}
+            loading={downloadingPdf}
+          >
+            {downloadingPdf ? "Descargando PDF..." : "Descargar PDF cupones"}
           </Button>
         </Col>
         <Col>
