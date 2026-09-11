@@ -31,9 +31,9 @@ export const get = async <T>(url: string, abortController: AbortController) => {
   } catch (error) {
     throw handleError(error);
   }
-}
+};
 
-export const post = async <T>(url: string, body: Record<string, any>, abortController: AbortController) => {
+export const post = async <T>(url: string, body: Record<string, any>, abortController?: AbortController) => {
   try {
     const token = await getCurrentToken();
     //body = await getBodyWithBase64Files({ ...body });
@@ -45,7 +45,7 @@ export const post = async <T>(url: string, body: Record<string, any>, abortContr
         headers: getHeaders(token),
         signal: abortController?.signal
       }
-    )
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -56,7 +56,7 @@ export const post = async <T>(url: string, body: Record<string, any>, abortContr
   } catch (error) {
     throw handleError(error);
   }
-}
+};
 
 export const put = async <T>(url: string, body: Record<string, any>, abortController: AbortController) => {
   try {
@@ -81,7 +81,7 @@ export const put = async <T>(url: string, body: Record<string, any>, abortContro
   } catch (error) {
     throw handleError(error);
   }
-}
+};
 
 export const patch = async <T>(url: string, body: Record<string, any>, abortController: AbortController) => {
   const token = await getCurrentToken();
@@ -93,7 +93,7 @@ export const patch = async <T>(url: string, body: Record<string, any>, abortCont
       headers: getHeaders(token),
       signal: abortController?.signal
     }
-  )
+  );
 
   if (!response.ok) {
     const error = await response.json();

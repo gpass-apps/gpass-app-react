@@ -61,6 +61,10 @@ export const getUsersUploadFromExcel = async (file: RcFile, event: Event) => {
         continue;
       }
 
+      if (key === "email" && isObject(cellValue) && "text" in cellValue) {
+        cellValue = cellValue.text;
+      }
+
       if (isObject(cellValue) && "result" in cellValue) {
         cellValue = (cellValue.result as number).toString();
       }
