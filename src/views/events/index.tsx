@@ -146,6 +146,7 @@ const Events = () => {
         path="/eventos/registrar"
       />
       <Table
+        wait={!user || !userFirestore }
         columns={columns}
         placeholderSearch="Buscar por nombre..."
         pathEdit="/eventos/editar"
