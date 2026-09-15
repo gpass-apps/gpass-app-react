@@ -23,7 +23,7 @@ export interface Event {
   total?: number;
   couponsByEmployee?: number;
   textExchange: string;
-  companyName: Company | string;
+  companyName: string;
   companyUid: Company | string;
   userAmbassadorIds: string[];
   userScannerIds: string[];
@@ -101,7 +101,7 @@ export interface UserUpload extends User {
   eventId?: string;
   eventName?: string;
   state: string;
-  branch: string;
+  branch?: string;
   numberOfCoupons?: number;
 }
 

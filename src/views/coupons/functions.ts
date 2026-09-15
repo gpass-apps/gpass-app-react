@@ -53,6 +53,7 @@ export const getUsersUploadFromExcel = async (file: RcFile, events: Event[]) => 
       }
 
       if (key === "numberOfCoupons") {
+        //ya existe el valor de eventName en el usuario por la primer columna del excel
         const event = events.find(e => e.name === user.eventName);
 
         if (!event) {
@@ -66,7 +67,13 @@ export const getUsersUploadFromExcel = async (file: RcFile, events: Event[]) => 
           throw new Error(`Valor inválido en la cantidad de cupones, fila del excel: ${rows.indexOf(row) + 2}`);
         }
 
-        user = { ...user, [key]: numberOfCoupons, eventId: event?.id || "" };
+        user = {
+          ...user,
+          [key]: numberOfCoupons,
+          eventId: event.id,
+          companyUid: event.companyUid,
+          companyName: event.companyName
+        };
         continue;
       }
 

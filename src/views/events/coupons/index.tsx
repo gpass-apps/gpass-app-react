@@ -133,7 +133,7 @@ const Coupons = () => {
     setDownloadingPdf(true);
 
     try {
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", query);
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt"].includes(f.type)));
 
       if (!coupons.length) {
         message.info("No hay cupones para descargar.");
@@ -202,12 +202,7 @@ const Coupons = () => {
     setDownloading(true);
 
     try {
-      const queryConstraints: QueryConstraint[] = [
-        where("eventId", "==", event.id),
-        orderBy("number", "asc")
-      ];
-
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt"].includes(f.type)));
       const rows = coupons.map((coupon) => ({
         ...coupon,
         isScanned: coupon.isScanned ? "Si" : "No",
@@ -242,6 +237,10 @@ const Coupons = () => {
       const users = usersUpload.map((u) => {
         const userCopy = { ...u, id: u.email };
         delete userCopy.numberOfCoupons;
+
+        userCopy.companyName = event.companyName;
+        userCopy.companyUid = event.companyUid;
+
         return userCopy;
       }) as User[];
 
@@ -262,7 +261,7 @@ const Coupons = () => {
             createAt: new Date(),
             userEmployeeId: u.email,
             userEmployeeName: u.name,
-            branch: u.branch,
+            branch: u.branch!,
             state: u.state,
           };
 

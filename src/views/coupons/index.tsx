@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Button, Col, Row, Upload, message } from "antd";
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/es/table';
-import { QueryConstraint, Timestamp, limit, orderBy, where } from 'firebase/firestore';
+import { QueryConstraint, Timestamp, limit, orderBy } from 'firebase/firestore';
 import dayjs from 'dayjs';
 import { couponReportColumns } from "../../constants";
 import HeaderView from "../../components/headerView";
@@ -11,7 +11,6 @@ import { Coupon, User } from "../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getLastCouponNumberByEventsName, getUsersUploadFromExcel } from "./functions";
 import { getCollectionGeneric, bulkAddDocuments } from '../../services/firebase';
-import { useAuth } from "../../context/authContext";
 import { downloadExcelOneWorkSheet } from "../../utils/functions";
 import { post } from "../../services";
 
@@ -96,11 +95,7 @@ const Coupons = () => {
     setDownloading(true);
 
     try {
-      const queryConstraints: QueryConstraint[] = [
-        orderBy("number", "asc")
-      ];
-
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt"].includes(f.type)));
       const rows = coupons.map((coupon) => ({
         ...coupon,
         isScanned: coupon.isScanned ? "Si" : "No",
@@ -161,7 +156,7 @@ const Coupons = () => {
             createAt: new Date(),
             userEmployeeId: u.email,
             userEmployeeName: u.name,
-            branch: u.branch,
+            branch: u.branch!,
             state: u.state,
           };
 
