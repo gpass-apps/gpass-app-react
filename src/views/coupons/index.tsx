@@ -59,13 +59,14 @@ const Coupons = () => {
   const propsTable = useMemo<PropsTable<Coupon>>(() => ({
     triggerReload,
     columns,
-    placeholderSearch: "Buscar por correo Empleado",
+    placeholderSearch: "Buscar",
     collection: "Coupons",
     query,
     searchValues: {
       userEmployeeId: "Correo Empleado",
       number: "Número",
-      isScanned: "Escaneado"
+      isScanned: "Escaneado",
+      eventName: "Evento"
     },
     disabledFilter: false,
     disableDisabledFilter: true,
@@ -77,6 +78,17 @@ const Coupons = () => {
           { key: "Si", label: "Si" },
           { key: "No", label: "No" }
         ]
+      }
+    ],
+    localSorts: [
+      {
+        key: "eventName",
+        order: "asc",
+      },
+      {
+
+        key: "number",
+        order: "asc",
       }
     ]
   }), [columns, query, triggerReload]);

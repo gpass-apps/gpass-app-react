@@ -46,6 +46,10 @@ export interface PropsTable<T> extends PropsUseCollection {
 	scrollY?: string;
 	localSearch?: boolean;
 	triggerReload?: boolean;
+	localSorts?: {
+		key: keyof T;
+		order: "asc" | "desc";
+	}[];
 }
 
 interface TableData {
@@ -96,7 +100,8 @@ const Table = <T extends {}>({
 	expandable,
 	scrollY,
 	localSearch,
-	triggerReload
+	triggerReload,
+	localSorts
 }: PropsTable<T>) => {
 	const { user } = useAuth();
 	const location = useLocation();
@@ -120,17 +125,9 @@ const Table = <T extends {}>({
 		let _query = [...queryProp];
 
 		if (search && typeof search === "string") {
-			const indexOrderBy = _query.findIndex(q => q.type === "orderBy");
-
-			if (indexOrderBy >= 0) {
-				_query.splice(indexOrderBy, 1);
-			}
+			_query = _query.filter(q => q.type !== "orderBy");
 
 			if (searchKey === "number") {
-				if (_query.some(q => q.type === "orderBy")) {
-					_query = _query.filter(q => q.type !== "orderBy");
-				}
-
 				_query.push(...[orderBy(searchKey), where(searchKey, "==", +search)]);
 			} else {
 				_query.push(...[orderBy(searchKey), startAt(search), endAt(search + '\uf8ff')]);
@@ -160,6 +157,8 @@ const Table = <T extends {}>({
 
 		return _query;
 	}, [tableData, queryProp]);
+
+	console.log(query);
 
 	const { loading, data, setData } = useCollection<T & { id: string; }>({ wait, query, collection: tableData.collection, formatDate, mergeResponse });
 
@@ -282,8 +281,8 @@ const Table = <T extends {}>({
 								a.href = url;
 
 								a.download = `${isTicket
-										? t?.userAmbassadorName || ""
-										: t?.userEmployeeId || ""
+									? t?.userAmbassadorName || ""
+									: t?.userEmployeeId || ""
 									}_${isTicket ? "Ticket" : "Cupon"
 									}-${t.number}_${formattedDate}.pdf`;
 
@@ -298,7 +297,7 @@ const Table = <T extends {}>({
 												isDownloaded: true
 											} as any
 											: item
-									) as (T & { id: string })[]
+									) as (T & { id: string; })[]
 								);
 
 								if (!t.isDownloaded) {
@@ -355,6 +354,46 @@ const Table = <T extends {}>({
 		];
 	}, [columnsProp, pathEdit, collection, removeTableActions, downloadPdf, downloadPdfCoupons, imageEventUrl, setData, path, deleteUser, user?.displayName]);
 
+	const dataSource = useMemo(() => {
+		let result = searchKey && search
+			? data.filter(f => {
+				const val = f[searchKey as keyof (T & { id: string; })];
+				return val != null ? String(val).toLowerCase().includes(search.toString().toLowerCase()) : false;
+			})
+			: [...data];
+
+		if (!localSorts?.length) return result;
+
+		result.sort((a, b) => {
+			for (const { key, order } of localSorts) {
+				const aVal = a[key as keyof (T & { id: string; })];
+				const bVal = b[key as keyof (T & { id: string; })];
+
+				if (aVal === bVal) continue;
+				if (aVal === undefined || aVal === null) return 1;
+				if (bVal === undefined || bVal === null) return -1;
+
+				let diff = 0;
+				if (typeof aVal === "number" && typeof bVal === "number") {
+					diff = aVal - bVal;
+				} else if (typeof aVal === "string" && typeof bVal === "string") {
+					diff = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: "base" });
+				} else if (typeof aVal === "boolean" && typeof bVal === "boolean") {
+					diff = (aVal ? 1 : 0) - (bVal ? 1 : 0);
+				} else {
+					diff = String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: "base" });
+				}
+
+				if (diff !== 0) {
+					return order === "desc" ? -diff : diff;
+				}
+			}
+			return 0;
+		});
+
+		return result;
+	}, [data, search, searchKey, localSorts]);
+
 	return (
 		<div>
 			<SearchTable
@@ -379,7 +418,7 @@ const Table = <T extends {}>({
 				sticky
 				scroll={{ x: 400, y: scrollY || "75vh", scrollToFirstRowOnChange: false }}
 				columns={columns}
-				dataSource={searchKey && search ? data.filter(f => (f[searchKey as keyof T] as string).toLowerCase().includes(search.toString().toLowerCase())) : data}
+				dataSource={dataSource}
 				loading={loading}
 				locale={{ emptyText: <Empty image={PRESENTED_IMAGE_SIMPLE} description='Sin registros.' /> }}
 				rowKey="id"
