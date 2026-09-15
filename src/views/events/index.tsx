@@ -50,7 +50,7 @@ const Events = () => {
       }
     ];
 
-    if (["SuperAdministrador", "Administrador", "Embajador"].includes(user?.displayName!)) {
+    if (["SuperAdministrador", "Administrador"].includes(user?.displayName!)) {
       columns.push({
         title: "Cupones",
         dataIndex: "coupons",

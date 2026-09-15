@@ -50,6 +50,7 @@ export interface PropsTable<T> extends PropsUseCollection {
 		key: keyof T;
 		order: "asc" | "desc";
 	}[];
+	onChangeQuery?: (query: QueryConstraint[]) => void;
 }
 
 interface TableData {
@@ -101,7 +102,8 @@ const Table = <T extends {}>({
 	scrollY,
 	localSearch,
 	triggerReload,
-	localSorts
+	localSorts,
+	onChangeQuery
 }: PropsTable<T>) => {
 	const { user } = useAuth();
 	const location = useLocation();
@@ -158,38 +160,40 @@ const Table = <T extends {}>({
 		return _query;
 	}, [tableData, queryProp]);
 
-	console.log(query);
+	useEffect(() => {
+		onChangeQuery && onChangeQuery(query);
+	}, [query, onChangeQuery]);
 
 	const { loading, data, setData } = useCollection<T & { id: string; }>({ wait, query, collection: tableData.collection, formatDate, mergeResponse });
 
 	const deleteUser = useCallback((r: T & { id: string; }) => post(`/users/del`, r, abortController.current!), [abortController]);
 
 	useEffect(() => {
-		if (loading) return;
+		if (loading || !data.length) return;
 
 		const tableBody = document.querySelector('.ant-table-body');
+		if (!tableBody) return;
 
-		tableBody?.addEventListener('scroll', async () => {
+		const handleScroll = async () => {
 			const isBottom = tableBody.scrollTop + tableBody.clientHeight >= tableBody.scrollHeight;
 
 			if (!isBottom) return;
 
-			const elementsWithAttribute = tableBody.querySelectorAll('[data-row-key]');
-			const lastElement = elementsWithAttribute[elementsWithAttribute.length - 1] as Element | undefined;
+			const lastItem = data[data.length - 1];
 
-			if (!lastElement) return;
+			if (!lastItem?.id) return;
 
-			const lastId = lastElement.getAttribute('data-row-key');
-
-			const doc = await getDocById(collection, lastId!);
+			const doc = await getDocById(collection, lastItem.id);
 
 			setTableData(prev => ({ ...prev, lastDoc: doc }));
-		});
+		};
+
+		tableBody.addEventListener('scroll', handleScroll);
 
 		return () => {
-			tableBody?.removeEventListener('scroll', () => { });
+			tableBody.removeEventListener('scroll', handleScroll);
 		};
-	}, [collection, loading]);
+	}, [collection, loading, data]);
 
 	useEffect(() => {
 		onLoadData && onLoadData(data);

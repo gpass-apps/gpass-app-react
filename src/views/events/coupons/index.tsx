@@ -11,8 +11,7 @@ import Table, { PropsTable } from '../../../components/table';
 import { Event, User, Coupon } from "../../../interfaces";
 import { RcFile } from "antd/lib/upload";
 import { getLastCouponNumber, getUsersUploadFromExcel } from "./functions";
-import { getCollectionGeneric, bulkAddDocuments } from '../../../services/firebase';
-import { useAuth } from "../../../context/authContext";
+import { getCollectionGeneric, bulkAddDocuments, bulkSetDocuments } from '../../../services/firebase';
 import { downloadExcelOneWorkSheet } from "../../../utils/functions";
 import { post } from "../../../services";
 import { QRCodeCanvas } from "qrcode.react";
@@ -45,7 +44,7 @@ const Coupons = () => {
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const { userFirestore } = useAuth();
+  const [query, setQuery] = useState<QueryConstraint[]>([]);
   const location = useLocation();
   const { state } = location;
 
@@ -65,6 +64,8 @@ const Coupons = () => {
       key: 'number',
     },
     { title: 'Empleado (Email)', dataIndex: 'userEmployeeId', key: 'userEmployeeId' },
+    { title: 'Sucursal', dataIndex: 'branch', key: 'branch' },
+    { title: 'Estado', dataIndex: 'state', key: 'state' },
     { title: 'Escaneado', dataIndex: 'isScanned', key: 'isScanned' },
     {
       title: 'Fecha Creación',
@@ -86,7 +87,7 @@ const Coupons = () => {
     }
   ], [event]);
 
-  const query = useMemo<QueryConstraint[]>(() => {
+  const queryBase = useMemo<QueryConstraint[]>(() => {
     if (!event?.id) return [];
 
     const queryConstraints: QueryConstraint[] = [
@@ -95,23 +96,21 @@ const Coupons = () => {
       limit(20)
     ];
 
-    if (userFirestore?.role === "Embajador") {
-      queryConstraints.push(where("userAmbassadorId", "==", userFirestore?.email || ""));
-    }
-
     return queryConstraints;
-  }, [event?.id, userFirestore]);
+  }, [event?.id]);
 
   const propsTable = useMemo<PropsTable<Coupon>>(() => ({
     triggerReload,
     columns,
-    placeholderSearch: "Buscar por correo Empleado",
+    placeholderSearch: "Buscar",
     collection: "Coupons",
-    query,
+    query: queryBase,
     searchValues: {
       userEmployeeId: "Correo Empleado",
       number: "Número",
-      isScanned: "Escaneado"
+      isScanned: "Escaneado",
+      branch: "Sucursal",
+      state: "Estado",
     },
     disabledFilter: false,
     disableDisabledFilter: true,
@@ -126,23 +125,15 @@ const Coupons = () => {
           { key: "No", label: "No" }
         ]
       }
-    ]
-  }), [columns, query, triggerReload, event.image]);
+    ],
+    onChangeQuery: setQuery,
+  }), [columns, queryBase, triggerReload, event.image]);
 
   const downloadCouponsPDF = async () => {
     setDownloadingPdf(true);
 
     try {
-      const queryConstraints: QueryConstraint[] = [
-        where("eventId", "==", event.id),
-        orderBy("number", "asc")
-      ];
-
-      if (userFirestore?.role === "Embajador") {
-        queryConstraints.push(where("userAmbassadorId", "==", userFirestore.email || ""));
-      }
-
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query);
 
       if (!coupons.length) {
         message.info("No hay cupones para descargar.");
@@ -150,21 +141,11 @@ const Coupons = () => {
         return;
       }
 
-      const qrUrls = await Promise.all(
-        coupons.map(async (coupon) => ({
-          coupon,
-          qrUrl: await QRCode.toDataURL(`${event?.id}-${coupon.number}`, { width: 400, margin: 1 }),
-        }))
-      );
+      for (const coupon of coupons) {
+        const qrUrl = await QRCode.toDataURL(`${event?.id}-${coupon.number}`, { width: 400, margin: 1 });
 
-      if (!qrUrls.length) {
-        message.error("Error al generar los códigos QR de los cupones.");
-        return;
-      }
-
-      const blob = await pdf(
-        <Document>
-          {qrUrls.map(({ coupon, qrUrl }) => (
+        const blob = await pdf(
+          <Document>
             <Page
               key={coupon.id || coupon.number}
               size={{ width: 440, height: 800 }}
@@ -181,20 +162,34 @@ const Coupons = () => {
                 style={stylesPDF.qrImage}
               />
             </Page>
-          ))}
-        </Document>
-      ).toBlob();
+          </Document>
+        ).toBlob();
 
-      const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
-      const url = window.URL.createObjectURL(blob);
+        const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
+        const url = window.URL.createObjectURL(blob);
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Cupones_${event?.name || 'Evento'}_${formattedDate}.pdf`;
-      a.click();
-      a.remove();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${coupon?.userEmployeeId || ""}_Cupon-${coupon.number}_${formattedDate}.pdf`;
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      }
 
-      message.success("PDF de cupones descargado con éxito!", 5);
+      const couponsToUpdate = coupons
+        .filter((c) => c.id && !c.isDownloaded)
+        .map((c) => ({ id: c.id, isDownloaded: true }));
+
+      if (couponsToUpdate.length) {
+        await bulkSetDocuments("Coupons", couponsToUpdate);
+      }
+
+      setTriggerReload(true);
+      setTimeout(() => {
+        setTriggerReload(false);
+      }, 0);
+
+      message.success("PDFs de cupones descargados con éxito!", 5);
     } catch (error) {
       console.error(error);
       message.error("Error al descargar PDF de cupones.", 5);
@@ -211,10 +206,6 @@ const Coupons = () => {
         where("eventId", "==", event.id),
         orderBy("number", "asc")
       ];
-
-      if (userFirestore?.role === "Embajador") {
-        queryConstraints.push(where("userAmbassadorId", "==", userFirestore.email || ""));
-      }
 
       const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
       const rows = coupons.map((coupon) => ({
@@ -271,6 +262,8 @@ const Coupons = () => {
             createAt: new Date(),
             userEmployeeId: u.email,
             userEmployeeName: u.name,
+            branch: u.branch,
+            state: u.state,
           };
 
           coupons.push(couponData);

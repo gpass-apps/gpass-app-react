@@ -19,7 +19,6 @@ const Coupons = () => {
   const [triggerReload, setTriggerReload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const { userFirestore } = useAuth();
 
   const columns: ColumnsType<Coupon> = useMemo(() => [
     {
@@ -33,6 +32,8 @@ const Coupons = () => {
       key: 'number',
     },
     { title: 'Empleado (Email)', dataIndex: 'userEmployeeId', key: 'userEmployeeId' },
+    { title: 'Sucursal', dataIndex: 'branch', key: 'branch' },
+    { title: 'Estado', dataIndex: 'state', key: 'state' },
     { title: 'Escaneado', dataIndex: 'isScanned', key: 'isScanned' },
     {
       title: 'Fecha Creación',
@@ -49,12 +50,8 @@ const Coupons = () => {
       limit(20)
     ];
 
-    if (userFirestore?.role === "Embajador") {
-      queryConstraints.push(where("userAmbassadorId", "==", userFirestore?.email || ""));
-    }
-
     return queryConstraints;
-  }, [userFirestore]);
+  }, []);
 
   const propsTable = useMemo<PropsTable<Coupon>>(() => ({
     triggerReload,
@@ -66,7 +63,9 @@ const Coupons = () => {
       userEmployeeId: "Correo Empleado",
       number: "Número",
       isScanned: "Escaneado",
-      eventName: "Evento"
+      eventName: "Evento",
+      branch: "Sucursal",
+      state: "Estado"
     },
     disabledFilter: false,
     disableDisabledFilter: true,
@@ -100,10 +99,6 @@ const Coupons = () => {
       const queryConstraints: QueryConstraint[] = [
         orderBy("number", "asc")
       ];
-
-      if (userFirestore?.role === "Embajador") {
-        queryConstraints.push(where("userAmbassadorId", "==", userFirestore.email || ""));
-      }
 
       const coupons = await getCollectionGeneric<Coupon>("Coupons", queryConstraints);
       const rows = coupons.map((coupon) => ({
@@ -166,6 +161,8 @@ const Coupons = () => {
             createAt: new Date(),
             userEmployeeId: u.email,
             userEmployeeName: u.name,
+            branch: u.branch,
+            state: u.state,
           };
 
           coupons.push(couponData);

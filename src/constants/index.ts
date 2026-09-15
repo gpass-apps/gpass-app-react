@@ -27,7 +27,7 @@ export const privateRoutesByUser: Record<Rols, string[]> = {
     "/cupones"
   ],
   'Administrador': ["/eventos", "/usuarios", "/usuarios/registrar", "/lector", "/eventos/boletos", "/eventos/registrar", "/eventos/asignar-boletos", "/eventos/lectores", "/eventos/cupones", "/cupones"],
-  'Embajador': ["/eventos", "/lector", "/eventos/boletos", "/eventos/cupones", "/cupones"],
+  'Embajador': ["/eventos", "/lector", "/eventos/boletos"],
   'Lector': ["/eventos", "/lector"],
   "Empleado": []
 };
@@ -118,7 +118,7 @@ export const mapExcelHeadersCoupons: Record<string, keyof UserUpload | "numberOf
   "nombre del evento": "eventName",
   "nombre": "name",
   "zona": "zone",
-  "sucursal": "companyName",
+  "sucursal": "branch",
   "estado": "state",
   "celular": "phone",
   "email": "email",
@@ -127,10 +127,10 @@ export const mapExcelHeadersCoupons: Record<string, keyof UserUpload | "numberOf
 
 export const validCouponColumns = Object.keys(mapExcelHeadersCoupons);
 
-export const mapExcelHeadersCouponsByEvent: Record<string, keyof User | "numberOfCoupons"> = {
+export const mapExcelHeadersCouponsByEvent: Record<string, keyof UserUpload | "numberOfCoupons"> = {
   "nombre": "name",
   "zona": "zone",
-  "sucursal": "companyName",
+  "sucursal": "branch",
   "estado": "state",
   "celular": "phone",
   "email": "email",

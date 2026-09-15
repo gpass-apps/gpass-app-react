@@ -47,6 +47,8 @@ export interface Coupon extends Ticket {
   eventName: string;
   userEmployeeId?: string;
   userEmployeeName?: string;
+  branch: string;
+  state: string;
 }
 
 export interface Ticket {
@@ -98,6 +100,8 @@ export interface User {
 export interface UserUpload extends User {
   eventId?: string;
   eventName?: string;
+  state: string;
+  branch: string;
   numberOfCoupons?: number;
 }
 
