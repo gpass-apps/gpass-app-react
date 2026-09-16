@@ -336,9 +336,9 @@ const Table = <T extends {}>({
 						<TableActionsButtons
 							record={record}
 							onDeleted={() => {
-								setTableData(prev => ({ ...prev, lastDoc: undefined, collection: "" }));
+								setTableData(prev => ({ ...prev, collection: "" }));
 								setTimeout(() => {
-									setTableData(prev => ({ ...prev, collection }));
+									setTableData({ collection, lastDoc: undefined, search, searchKey, });
 								}, 200);
 							}}
 							fun={() => {
@@ -408,9 +408,9 @@ const Table = <T extends {}>({
 						return;
 					}
 
-					setTableData(prev => ({ ...prev, lastDoc: undefined, collection: "" }));
+					setTableData(prev => ({ ...prev, collection: "" }));
 					setTimeout(() => {
-						setTableData(prev => ({ ...prev, search: _search, searchKey: _searchKey, collection }));
+						setTableData(prev => ({ ...prev, search: _search, searchKey: _searchKey, collection, lastDoc: undefined }));
 					}, 200);
 				}}
 				placeholder={placeholderSearch}

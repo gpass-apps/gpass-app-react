@@ -93,7 +93,7 @@ const Coupons = () => {
     const queryConstraints: QueryConstraint[] = [
       where("eventId", "==", event.id),
       orderBy("number", "asc"),
-      limit(20)
+      limit(10)
     ];
 
     return queryConstraints;
