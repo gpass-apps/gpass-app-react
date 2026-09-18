@@ -191,11 +191,31 @@ const CreateEvent = () => {
         maxCount: 1,
         accept: "image/png, image/jpeg",
         onChange: (value: UploadFile<any>[]) => setEvent(e => ({ ...e, image: value })),
-        md: 12,
+        md: 24,
         styleFI: { display: "flex", justifyContent: "center" },
         multiple: false,
         withOutCrop: true
       },
+      {
+        typeControl: 'textarea',
+        typeInput: 'text',
+        label: 'Texto cuando se Canjea QR',
+        name: 'textExchange',
+        value: event.textExchange,
+        onChange: (value: string) => setEvent(e => ({ ...e, textExchange: value })),
+        md: 12,
+        multiple: false
+      },
+      {
+        typeControl: 'input',
+        typeInput: 'number',
+        label: 'Cantidad de cupones x empleado',
+        name: 'couponsByEmployee',
+        disabled: type === "update",
+        value: event.couponsByEmployee,
+        onChange: (value: string) => setEvent(e => ({ ...e, couponsByEmployee: value ? +value : undefined })),
+        md: 12
+      }
     ];
 
     if (user?.displayName === "SuperAdministrador") {
@@ -205,29 +225,9 @@ const CreateEvent = () => {
         name: 'companyName',
         value: event.companyName + "-" + event.companyUid,
         onChange: (value: string) => setEvent(e => ({ ...e, companyName: value.split("-")[0], companyUid: value.split("-")[1] })),
-        md: 12,
+        md: 24,
         options: companies
-      },
-        {
-          typeControl: 'textarea',
-          typeInput: 'text',
-          label: 'Texto cuando se Canjea QR',
-          name: 'textExchange',
-          value: event.textExchange,
-          onChange: (value: string) => setEvent(e => ({ ...e, textExchange: value })),
-          md: 12,
-          multiple: false
-        },
-        {
-          typeControl: 'input',
-          typeInput: 'number',
-          label: 'Cantidad de cupones x empleado',
-          name: 'couponsByEmployee',
-          disabled: type === "update",
-          value: event.couponsByEmployee,
-          onChange: (value: string) => setEvent(e => ({ ...e, couponsByEmployee: value ? +value : undefined })),
-          md: 12
-        }
+      }
       );
     }
     return inputs;
