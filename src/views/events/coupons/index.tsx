@@ -129,11 +129,13 @@ const Coupons = () => {
     onChangeQuery: setQuery,
   }), [columns, queryBase, triggerReload, event.image]);
 
+  console.log(query);
+
   const downloadCouponsPDF = async () => {
     setDownloadingPdf(true);
 
     try {
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt"].includes(f.type)));
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => f.type !== "limit"));
 
       if (!coupons.length) {
         message.info("No hay cupones para descargar.");
@@ -170,7 +172,7 @@ const Coupons = () => {
 
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${coupon?.userEmployeeId || ""}_Cupon-${coupon.number}_${formattedDate}.pdf`;
+        a.download = `${coupon?.userEmployeeName || ""}_Cupon-${coupon.number}_${formattedDate}.pdf`;
         a.click();
         a.remove();
         window.URL.revokeObjectURL(url);

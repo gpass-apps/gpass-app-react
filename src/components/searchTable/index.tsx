@@ -56,7 +56,7 @@ const SearchTable: FC<Props> = ({ onSearch, placeholder, searchValues, optiosSea
 
       </Col>
     </Row>
-  )
-}
+  );
+};
 
-export default SearchTable
+export default SearchTable;

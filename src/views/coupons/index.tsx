@@ -95,7 +95,7 @@ const Coupons = () => {
     setDownloading(true);
 
     try {
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt"].includes(f.type)));
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit"].includes(f.type)));
       const rows = coupons.map((coupon) => ({
         ...coupon,
         isScanned: coupon.isScanned ? "Si" : "No",

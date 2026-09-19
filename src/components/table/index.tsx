@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Empty, Table as TableAnt, message } from 'antd';
+import { Col, Empty, Row, Select, Table as TableAnt, message } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import SearchTable from '../searchTable';
 import TableActionsButtons from "./tableActionsButtons";
@@ -28,6 +28,13 @@ export interface OptiosSearchValues {
 	options: Option[];
 }
 
+interface ExtraFilter {
+	key: string;
+	label: string;
+	options?: Option[];
+	type: "select";
+}
+
 export interface PropsTable<T> extends PropsUseCollection {
 	header?: ReactNode;
 	columns: ColumnsType<T>;
@@ -51,6 +58,7 @@ export interface PropsTable<T> extends PropsUseCollection {
 		order: "asc" | "desc";
 	}[];
 	onChangeQuery?: (query: QueryConstraint[]) => void;
+	extraFilters?: ExtraFilter[];
 }
 
 interface TableData {
@@ -58,6 +66,10 @@ interface TableData {
 	searchKey: string;
 	lastDoc?: DocumentSnapshot<DocumentData, DocumentData>;
 	collection: string;
+	extraFilters?: {
+		key: string;
+		value: string;
+	}[];
 }
 
 const { PRESENTED_IMAGE_SIMPLE } = Empty;
@@ -103,7 +115,8 @@ const Table = <T extends {}>({
 	localSearch,
 	triggerReload,
 	localSorts,
-	onChangeQuery
+	onChangeQuery,
+	extraFilters,
 }: PropsTable<T>) => {
 	const { user } = useAuth();
 	const location = useLocation();
@@ -116,7 +129,7 @@ const Table = <T extends {}>({
 	useEffect(() => {
 		if (!triggerReload) return;
 
-		setTableData(prev => ({ ...prev, search: "", searchKey: "", lastDoc: undefined, collection: "" }));
+		setTableData(prev => ({ ...prev, lastDoc: undefined, collection: "" }));
 		setTimeout(() => {
 			setTableData(prev => ({ ...prev, collection }));
 		}, 200);
@@ -135,6 +148,10 @@ const Table = <T extends {}>({
 				_query.push(...[orderBy(searchKey), startAt(search), endAt(search + '\uf8ff')]);
 			}
 		}
+
+		tableData.extraFilters?.forEach(({ key, value }) => {
+			_query.push(where(key, "==", value));
+		});
 
 		if (search && Array.isArray(search)) {
 			const indexOrderBy = _query.findIndex(q => q.type === "orderBy");
@@ -398,6 +415,8 @@ const Table = <T extends {}>({
 		return result;
 	}, [data, search, searchKey, localSorts]);
 
+	console.log(tableData);
+
 	return (
 		<div>
 			<SearchTable
@@ -417,6 +436,41 @@ const Table = <T extends {}>({
 				searchValues={searchValues}
 				optiosSearchValues={optiosSearchValues}
 			/>
+			<br />
+			<Row gutter={10}>
+				{
+					extraFilters?.map(filter => (
+						<Col key={filter.key} xs={24} md={4}>
+							<Select
+								style={{ width: '100%' }} placeholder={`Seleccione el ${filter.label.toLowerCase()}`}
+								onChange={(value) => {
+									setTableData(prev => ({ ...prev, collection: "" }));
+
+									setTimeout(() => {
+										setTableData(prev => {
+											const others = prev.extraFilters?.filter(f => f.key !== filter.key) || [];
+											return {
+												...prev,
+												collection,
+												extraFilters: value ? [...others, { key: filter.key, value }] : others
+											};
+										});
+									}, 200);
+								}}
+							>
+								{
+									filter.options?.map(option => (
+										<Select.Option key={option.key} value={option.key}>
+											{option.label}
+										</Select.Option>
+									))
+								}
+							</Select>
+						</Col>
+					))
+				}
+			</Row>
+
 			<br />
 			<TableAnt
 				sticky

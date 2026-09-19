@@ -16,23 +16,22 @@ const Users = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const response = await getCollectionGeneric<Company>('Companies', [where("disabled", "==", false)])
+        const response = await getCollectionGeneric<Company>('Companies', [where("disabled", "==", false)]);
         setCompanies(response);
       } catch (error) {
         console.log(error);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     init();
-  }, [])
+  }, []);
 
   const searchVal = useMemo<Record<string, string>>(() => {
     let searchVal: Record<string, string> = {
       name: "Nombre",
       email: "Correo",
-      role: "Rol"
     };
 
     if (user?.displayName === "SuperAdministrador") {
@@ -40,7 +39,7 @@ const Users = () => {
     }
 
     return searchVal;
-  }, [user])
+  }, [user]);
 
   const columns: ColumnsType<User> = useMemo(() => [
     { title: 'Nombre', dataIndex: 'name', key: 'name' },
@@ -50,7 +49,7 @@ const Users = () => {
     { title: 'Rol', dataIndex: 'role', key: 'role' },
     { title: 'Zona', dataIndex: 'zone', key: 'zone' },
     { title: 'Estado', dataIndex: 'state', key: 'state' }
-  ], [])
+  ], []);
 
   const query = useMemo<QueryConstraint[]>(() => {
     const query = [orderBy("createAt", "desc"), where("disabled", "==", false), limit(20)];
@@ -72,7 +71,16 @@ const Users = () => {
     searchValues: searchVal,
     optiosSearchValues: [
       {
-        propSearch: "role",
+        propSearch: "companyUid",
+        options: [
+          { key: "", label: "Sin Rol" },
+          ...companies.map(c => ({ key: c.id!, label: c.name }))
+        ]
+      }
+    ],
+    extraFilters: [
+      {
+        key: "role",
         options: [
           {
             key: "",
@@ -90,17 +98,12 @@ const Users = () => {
             key: "Lector",
             label: "Lector"
           }
-        ]
+        ],
+        label: "Rol",
+        type: "select"
       },
-      {
-        propSearch: "companyUid",
-        options: [
-          { key: "", label: "Sin Rol" },
-          ...companies.map(c => ({ key: c.id!, label: c.name }))
-        ]
-      }
     ]
-  }), [columns, query, companies, loading, searchVal])
+  }), [columns, query, companies, loading, searchVal]);
 
   return (
     <div style={{ margin: 20 }}>
@@ -112,7 +115,7 @@ const Users = () => {
         {...propsTable}
       />
     </div>
-  )
-}
+  );
+};
 
 export default Users;
