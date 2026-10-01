@@ -181,6 +181,8 @@ const Table = <T extends {}>({
 		onChangeQuery && onChangeQuery(query);
 	}, [query, onChangeQuery]);
 
+	console.log(query);
+
 	const { loading, data, setData } = useCollection<T & { id: string; }>({ wait, query, collection: tableData.collection, formatDate, mergeResponse });
 
 	const deleteUser = useCallback((r: T & { id: string; }) => post(`/users/del`, r, abortController.current!), [abortController]);
@@ -301,11 +303,7 @@ const Table = <T extends {}>({
 								const a = document.createElement('a');
 								a.href = url;
 
-								a.download = `${isTicket
-									? t?.userAmbassadorName || ""
-									: t?.userEmployeeId || ""
-									}_${isTicket ? "Ticket" : "Cupon"
-									}-${t.number}_${formattedDate}.pdf`;
+								a.download = `${isTicket ? t?.userAmbassadorName || "" : t?.userEmployeeName || ""}_${isTicket ? "Ticket" : "Cupon"}-${t.number}_${formattedDate}.pdf`;
 
 								a.click();
 								a.remove();
@@ -373,7 +371,7 @@ const Table = <T extends {}>({
 				},
 			}
 		];
-	}, [columnsProp, pathEdit, collection, removeTableActions, downloadPdf, downloadPdfCoupons, imageEventUrl, setData, path, deleteUser, user?.displayName]);
+	}, [columnsProp, pathEdit, collection, removeTableActions, downloadPdf, downloadPdfCoupons, imageEventUrl, setData, path, deleteUser, user?.displayName, search, searchKey]);
 
 	const dataSource = useMemo(() => {
 		let result = searchKey && search
@@ -414,8 +412,6 @@ const Table = <T extends {}>({
 
 		return result;
 	}, [data, search, searchKey, localSorts]);
-
-	console.log(tableData);
 
 	return (
 		<div>
