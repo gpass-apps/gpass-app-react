@@ -145,7 +145,12 @@ const Table = <T extends {}>({
 			if (searchKey === "number") {
 				_query.push(...[orderBy(searchKey), where(searchKey, "==", +search)]);
 			} else {
-				_query.push(...[orderBy(searchKey), startAt(search), endAt(search + '\uf8ff')]);
+				_query.push(...[
+					where(searchKey, "==", search),
+					orderBy(searchKey),
+					startAt(search),
+					endAt(search + '\uf8ff')
+				]);
 			}
 		}
 
@@ -180,8 +185,6 @@ const Table = <T extends {}>({
 	useEffect(() => {
 		onChangeQuery && onChangeQuery(query);
 	}, [query, onChangeQuery]);
-
-	console.log(query);
 
 	const { loading, data, setData } = useCollection<T & { id: string; }>({ wait, query, collection: tableData.collection, formatDate, mergeResponse });
 

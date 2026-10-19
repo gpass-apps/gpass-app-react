@@ -17,6 +17,7 @@ import { post } from "../../../services";
 import { QRCodeCanvas } from "qrcode.react";
 import QRCode from "qrcode";
 import { Document, Page, Image, StyleSheet, pdf } from '@react-pdf/renderer';
+import JSZip from "jszip";
 
 const stylesPDF = StyleSheet.create({
   page: {
@@ -112,6 +113,7 @@ const Coupons = () => {
       isScanned: "Escaneado",
       branch: "Sucursal",
       state: "Estado",
+      dateScanned: "Fecha escaneado",
     },
     disabledFilter: false,
     disableDisabledFilter: true,
@@ -128,15 +130,26 @@ const Coupons = () => {
       }
     ],
     onChangeQuery: setQuery,
-  }), [columns, queryBase, triggerReload, event.image]);
+    localSorts: [
+      {
+        key: "eventName",
+        order: "asc",
+      },
+      {
 
-  console.log(query);
+        key: "number",
+        order: "asc",
+      }
+    ]
+  }), [columns, queryBase, triggerReload, event.image]);
 
   const downloadCouponsPDF = async () => {
     setDownloadingPdf(true);
 
+    const _query = query.filter(f => !["limit", "startAt", "endAt"].includes(f.type));
+
     try {
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => f.type !== "limit"));
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", _query);
 
       if (!coupons.length) {
         message.info("No hay cupones para descargar.");
@@ -144,13 +157,14 @@ const Coupons = () => {
         return;
       }
 
+      const zip = new JSZip();
+      const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
+
       for (const coupon of coupons) {
         const qrUrl = await QRCode.toDataURL(`${event?.id}-${coupon.number}`, { width: 400, margin: 1 });
-
-        const blob = await pdf(
+        const couponPdf = await pdf(
           <Document>
             <Page
-              key={coupon.id || coupon.number}
               size={{ width: 440, height: 800 }}
               style={stylesPDF.page}
             >
@@ -168,16 +182,19 @@ const Coupons = () => {
           </Document>
         ).toBlob();
 
-        const formattedDate = dayjs().format('DD-MM-YYYY-HH-mm-ss');
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${coupon?.userEmployeeName || ""}_Cupon-${coupon.number}_${formattedDate}.pdf`;
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
+        const fileName = `${coupon.userEmployeeName || ""}_Cupon-${coupon.number}_${formattedDate}.pdf`
+          .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_");
+        zip.file(fileName, couponPdf);
       }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = window.URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${event?.name || "Evento"}_Cupones_${formattedDate}.zip`;
+      a.click();
+      a.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 
       const couponsToUpdate = coupons
         .filter((c) => c.id && !c.isDownloaded)
@@ -323,7 +340,7 @@ const Coupons = () => {
             onClick={downloadCouponsPDF}
             loading={downloadingPdf}
           >
-            {downloadingPdf ? "Descargando PDF..." : "Descargar PDF cupones"}
+            {downloadingPdf ? "Generando PDFs..." : "Descargar PDFs (.zip)"}
           </Button>
         </Col>
         <Col>
