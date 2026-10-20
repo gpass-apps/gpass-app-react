@@ -146,10 +146,13 @@ const Coupons = () => {
   const downloadCouponsPDF = async () => {
     setDownloadingPdf(true);
 
-    const _query = query.filter(f => !["limit", "startAt", "endAt"].includes(f.type));
+    const _query = query.filter(f => !["limit", "startAt", "endAt", "startAfter"].includes(f.type));
 
     try {
       const coupons = await getCollectionGeneric<Coupon>("Coupons", _query);
+
+      console.log(_query);
+      console.log(coupons);
 
       if (!coupons.length) {
         message.info("No hay cupones para descargar.");
@@ -222,7 +225,7 @@ const Coupons = () => {
     setDownloading(true);
 
     try {
-      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt"].includes(f.type)));
+      const coupons = await getCollectionGeneric<Coupon>("Coupons", query.filter(f => !["limit", "startAt", "endAt", "startAfter"].includes(f.type)));
       const rows = coupons.map((coupon) => ({
         ...coupon,
         isScanned: coupon.isScanned ? "Si" : "No",
