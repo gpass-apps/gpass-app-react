@@ -129,6 +129,27 @@ const Coupons = () => {
         ]
       }
     ],
+     extraFilters: [
+      {
+        key: "isScanned",
+        options: [
+          {
+            key: "",
+            label: "Todos"
+          },
+          {
+            key: "Si",
+            label: "Si"
+          },
+          {
+            key: "No",
+            label: "No"
+          }
+        ],
+        label: "Escaneado",
+        type: "select"
+      },
+    ],
     onChangeQuery: setQuery,
     localSorts: [
       {

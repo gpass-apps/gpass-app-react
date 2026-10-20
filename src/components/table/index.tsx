@@ -125,7 +125,6 @@ const Table = <T extends {}>({
     const [tableData, setTableData] = useState<TableData>({ search: "", searchKey: "", collection });
     const [search, setSearch] = useState<string | Dayjs[]>("");
     const [searchKey, setSearchKey] = useState("");
-    const [scanFilter, setScanFilter] = useState(""); // <-- Añadido
 
     useEffect(() => {
         if (!triggerReload) return;
@@ -385,19 +384,6 @@ const Table = <T extends {}>({
             })
             : [...data];
 
-        // FIX 1: Eliminar duplicados por ID
-        const uniqueMap = new Map();
-        result.forEach(item => {
-            const uniqueKey = (item as any).id || JSON.stringify(item);
-            uniqueMap.set(uniqueKey, item);
-        });
-        result = Array.from(uniqueMap.values());
-
-        // FIX 2: Filtrar localmente por el estado de escaneo ("Si" / "No")
-        if (scanFilter === "Si" || scanFilter === "No") {
-            result = result.filter((item: any) => item.isScanned === scanFilter);
-        }
-
         if (!localSorts?.length) return result;
 
         result.sort((a, b) => {
@@ -428,7 +414,7 @@ const Table = <T extends {}>({
         });
 
         return result;
-    }, [data, search, searchKey, scanFilter, localSorts]);
+    }, [data, search, searchKey, localSorts]);
 
     return (
         <div>
@@ -444,11 +430,6 @@ const Table = <T extends {}>({
                     setTimeout(() => {
                         setTableData(prev => ({ ...prev, search: _search, searchKey: _searchKey, collection, lastDoc: undefined }));
                     }, 200);
-                }}
-                // FIX 3: Conectar la prop que viene del componente de tu compa
-                onScanFilterChange={(value) => {
-                    setScanFilter(value);
-                    setTableData(prev => ({ ...prev, lastDoc: undefined }));
                 }}
                 placeholder={placeholderSearch}
                 searchValues={searchValues}
