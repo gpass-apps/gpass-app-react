@@ -8,12 +8,21 @@ interface Props {
   placeholder?: string;
   searchValues: Record<string, string>;
   optiosSearchValues?: OptiosSearchValues[];
+  onScanFilterChange?: (value: string) => void;
 }
 
 const { Search } = Input;
 
-const SearchTable: FC<Props> = ({ onSearch, placeholder, searchValues, optiosSearchValues }) => {
+const SearchTable: FC<Props> = ({ onSearch, placeholder, searchValues, optiosSearchValues, onScanFilterChange }) => {
   const [keySearch, setKeySearch] = useState<string>(Object.keys(searchValues)[0]);
+  const [scanFilter, setScanFilter] = useState("");
+  
+  const handleKeySearchChange = (value: string) => {
+    setKeySearch(value);
+
+    setScanFilter("");
+    onScanFilterChange?.("");
+  };
 
   return (
     <Row gutter={10}>
@@ -21,7 +30,7 @@ const SearchTable: FC<Props> = ({ onSearch, placeholder, searchValues, optiosSea
         <Select
           style={{ width: '100%' }}
           value={keySearch}
-          onChange={(value) => setKeySearch(value)}
+          onChange={handleKeySearchChange}
         >
           {Object.keys(searchValues).map((key) => (
             <Select.Option key={key} value={key}>
@@ -30,7 +39,26 @@ const SearchTable: FC<Props> = ({ onSearch, placeholder, searchValues, optiosSea
           ))}
         </Select>
       </Col>
-      <Col md={20}>
+
+      {keySearch.includes("branch") && (
+        <Col xs={24} md={2}>
+          <Select
+            style={{ width: '100%', marginBottom: '7%' }}
+            placeholder="Estado de escaneo"
+            value={scanFilter}
+            onChange={value => {
+              setScanFilter(value);
+              onScanFilterChange?.(value);
+            }}
+          >
+            <Select.Option value="">Todos</Select.Option>
+            <Select.Option value="Si">Escaneados</Select.Option>
+            <Select.Option value="No">No escaneados</Select.Option>
+          </Select>
+        </Col>
+      )}
+
+      <Col md={keySearch.includes("branch") ? 18 : 20}>
         {
           Object.keys(searchValues)?.some(key => key.includes("date") && keySearch.includes("date"))
             ?
@@ -56,7 +84,7 @@ const SearchTable: FC<Props> = ({ onSearch, placeholder, searchValues, optiosSea
 
       </Col>
     </Row>
-  );
-};
+  )
+}
 
 export default SearchTable;
